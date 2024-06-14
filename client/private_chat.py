@@ -1,5 +1,6 @@
 import grpc
 import threading
+import time
 import tkinter as tk
 from tkinter import scrolledtext
 
@@ -22,6 +23,16 @@ class PrivateChat():
         self.messages = []
         # Obrir chat privat en un thread
         threading.Thread(target=self.open_chat).start()
+        
+    # Mètode per gestionar la desconnexió de l'altre client
+    def hearbeat_other(self):
+        while True:
+            try:
+                self.stub.Heartbeat(chat_pb2.Empty())
+            except grpc.RpcError:
+                self.display_message("EXIT", "left")
+                return
+            time.sleep(1)
     
     # Mètode per eliminar el chat privat
     def destroy_chat(self):
@@ -71,6 +82,9 @@ class PrivateChat():
             self.stub.SendMessage(chat_pb2.Message(username=self.client.username, body="EXIT"))
             self.destroy_chat()
         self.chat.protocol("WM_DELETE_WINDOW", close_chat)
+        
+        # Gestionar desconnexió de l'altre client
+        threading.Thread(target=self.hearbeat_other).start()
 
         # Llançar finestra
         self.chat.mainloop()
