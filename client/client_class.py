@@ -9,6 +9,9 @@ import tkinter as tk
 from proto import chat_pb2
 from proto import chat_pb2_grpc
 
+# Importar altres classes
+from private_chat import PrivateChat
+
 class Client:
     
     # Constructor
@@ -17,6 +20,8 @@ class Client:
         self.ip = ip
         self.port = port
         self.server_stub = server_stub
+        # Chats privats actius
+        self.private_chats = {}
         # Inicialitzar biblioteca de colors per la terminal
         colorama.init()
         # Llançar thread per enviar senyals al client
@@ -47,6 +52,17 @@ class Client:
         # Funció per respondre una sol·licitud de chat (acceptar o denegar)
         def answer_connection(bool):
             root.destroy()
+            if bool:
+                # Obtenir dades de l'altre client
+                response = self.server_stub.GetClientInfo(chat_pb2.GetInfoRequest(username=other_username))
+                other_ip = response.ip
+                other_port = response.port
+                if other_ip == "" and other_port == 0:
+                    bool = False
+                else:
+                    # Crear i guardar chat privat
+                    chat = PrivateChat(other_username, other_ip, other_port)
+                    self.private_chats[other_username] = chat
             self.accept = bool
         
         # Configurar finestra per respondre la sol·licitud
@@ -76,6 +92,9 @@ class Client:
         if other_username == self.username:
             print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No pots iniciar un chat privat amb tu mateix")
             return
+        elif other_username in self.private_chats:
+            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} Ja tens un chat obert amb aquest usuari")
+            return
         
         # Obtenir dades de l'altre client
         print("Obtenint dades...")
@@ -95,6 +114,9 @@ class Client:
         response = other_stub.Connection(chat_pb2.ConnectionRequest(username=self.username))
         if not response.accept:
             print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} L'altre usuari ha denegat la petició")
-            return
         else:
             print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} L'altre usuari ha acceptat la petició")
+            # Crear i guardar chat privat
+            print("Obrint chat...")
+            chat = PrivateChat(other_username, other_ip, other_port, other_stub)
+            self.private_chats[other_username] = chat

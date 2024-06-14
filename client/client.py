@@ -57,13 +57,18 @@ def register_client(ip, port):
         # Eliminar caràcters especials
         username = re.sub(r"[^A-Za-z0-9\s]", "", username)
         # Registrar client
-        response = server_stub.RegisterClient(chat_pb2.RegisterRequest(username=username, ip=ip, port=port))
-        if response.success:
-            client = Client(username, ip, port, server_stub)
-            print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} T'has registrat correctament.")
-            break
-        else:
-            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} {response.body}")
+        try:
+            response = server_stub.RegisterClient(chat_pb2.RegisterRequest(username=username, ip=ip, port=port))
+            if response.success:
+                client = Client(username, ip, port, server_stub)
+                print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} T'has registrat correctament.")
+                break
+            else:
+                print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} {response.body}")
+        except grpc.RpcError:
+            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha pogut connectar amb el servidor")
+            time.sleep(1)
+            os._exit(0)
             
     return client
 
@@ -114,7 +119,7 @@ if __name__ == "__main__":
 
     # Bucle principal del client
     while True:
-        option = input("\nOpció: ").upper()
+        option = input(f"\n{colorama.Fore.YELLOW}Opció:{colorama.Fore.RESET} ").upper()
         match option:
             case "P":
                 client.connect_chat()              
