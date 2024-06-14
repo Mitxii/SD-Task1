@@ -48,4 +48,5 @@ message ConnectionResponse {
 message Message {
     string username = 1;
     string body = 2;
+    string time = 3;
 }

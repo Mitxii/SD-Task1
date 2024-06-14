@@ -1,8 +1,10 @@
 import grpc
 import threading
 import time
+import datetime
 import tkinter as tk
 from tkinter import scrolledtext
+from tkinter import font
 
 # Importar classes gRPC
 from proto import chat_pb2
@@ -46,16 +48,22 @@ class PrivateChat():
         self.root = tk.Tk()
         self.root.withdraw()
         
+        self.last = "00:00"
+        
         # Funció per enviar un missatge
         def send_message(ctx=None):
+            # Obtenir hora
+            now = datetime.datetime.now()
+            time = now.strftime("%H:%M")
+            # Obtenir missatge
             message = entry_msg.get()
             if message != "":
                 # Buidar input
                 entry_msg.delete(0, tk.END)
                 # Mostrar missatge
-                self.display_message(message, "right")
+                self.display_message(message, time, "right")
                 # Enviar missatge
-                self.stub.SendMessage(chat_pb2.Message(username=self.client.username, body=message))
+                self.stub.SendMessage(chat_pb2.Message(username=self.client.username, body=message, time=time))
                
         # Configurar finestra de chat privat
         self.chat = tk.Toplevel(self.root)
@@ -90,7 +98,7 @@ class PrivateChat():
         self.chat.mainloop()
         
     # Mètode per imprimir un missatge al chat
-    def display_message(self, message, alignment):
+    def display_message(self, message, time, alignment):
         # Si el missatge és 'EXIT', vol dir que l'altre client ha tancat el chat o s'ha desconnectat
         if message == "EXIT":
             # Si la posició és a la dreta, vol dir que s'ha enviat (no rebut). Per tant, només es destrueix el chat
@@ -107,6 +115,12 @@ class PrivateChat():
         # Si és un altre missatge, s'imprimeix en funció de la posició
         else:
             self.chat_display.config(state="normal")
+            # Imprimir temps
+            if time != self.last:
+                self.chat_display.insert(tk.END, f"{time}\n", f"time")
+                self.last = time
+            self.chat_display.tag_configure("time", font=font.Font(size=6), justify="center")
+            # Imprimir missatge
             self.chat_display.insert(tk.END, f"{message}\n", alignment)
             self.chat_display.tag_configure(alignment, justify=alignment)
             self.chat_display.config(state="disabled")

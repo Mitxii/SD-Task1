@@ -34,7 +34,8 @@ class ClientServicer(chat_pb2_grpc.ClientServiceServicer):
     def SendMessage(self, request, context):
         username = request.username
         message = request.body
-        self.client.send_message_to(username, message)
+        time = request.time
+        self.client.send_message_to(username, message, time)
         return chat_pb2.Empty()
 
 # Mètode per registrar el client al servidor central

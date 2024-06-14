@@ -132,8 +132,8 @@ class Client:
             self.private_chats.pop(other_username)
            
     # Mètode per enviar un missatge 
-    def send_message_to(self, other_username, message):
+    def send_message_to(self, other_username, message, time):
         if other_username in self.private_chats:
             chat = self.private_chats[other_username]
             # Enviar missatge
-            chat.display_message(message, "left")
+            chat.display_message(message, time, "left")

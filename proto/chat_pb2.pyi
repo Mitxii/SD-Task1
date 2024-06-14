@@ -53,9 +53,11 @@ class ConnectionResponse(_message.Message):
     def __init__(self, accept: bool = ...) -> None: ...
 
 class Message(_message.Message):
-    __slots__ = ("username", "body")
+    __slots__ = ("username", "body", "time")
     USERNAME_FIELD_NUMBER: _ClassVar[int]
     BODY_FIELD_NUMBER: _ClassVar[int]
+    TIME_FIELD_NUMBER: _ClassVar[int]
     username: str
     body: str
-    def __init__(self, username: _Optional[str] = ..., body: _Optional[str] = ...) -> None: ...
+    time: str
+    def __init__(self, username: _Optional[str] = ..., body: _Optional[str] = ..., time: _Optional[str] = ...) -> None: ...
