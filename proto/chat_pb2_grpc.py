@@ -5,7 +5,7 @@ import grpc
 from proto import chat_pb2 as proto_dot_chat__pb2
 
 
-class ChatServerStub(object):
+class CentralServerStub(object):
     """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
@@ -15,13 +15,13 @@ class ChatServerStub(object):
             channel: A grpc.Channel.
         """
         self.RegisterClient = channel.unary_unary(
-                '/ChatServer/RegisterClient',
+                '/CentralServer/RegisterClient',
                 request_serializer=proto_dot_chat__pb2.RegisterRequest.SerializeToString,
                 response_deserializer=proto_dot_chat__pb2.RegisterResponse.FromString,
                 )
 
 
-class ChatServerServicer(object):
+class CentralServerServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def RegisterClient(self, request, context):
@@ -31,7 +31,7 @@ class ChatServerServicer(object):
         raise NotImplementedError('Method not implemented!')
 
 
-def add_ChatServerServicer_to_server(servicer, server):
+def add_CentralServerServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'RegisterClient': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterClient,
@@ -40,12 +40,12 @@ def add_ChatServerServicer_to_server(servicer, server):
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
-            'ChatServer', rpc_method_handlers)
+            'CentralServer', rpc_method_handlers)
     server.add_generic_rpc_handlers((generic_handler,))
 
 
  # This class is part of an EXPERIMENTAL API.
-class ChatServer(object):
+class CentralServer(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
@@ -59,8 +59,168 @@ class ChatServer(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ChatServer/RegisterClient',
+        return grpc.experimental.unary_unary(request, target, '/CentralServer/RegisterClient',
             proto_dot_chat__pb2.RegisterRequest.SerializeToString,
             proto_dot_chat__pb2.RegisterResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+
+class ClientServiceStub(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def __init__(self, channel):
+        """Constructor.
+
+        Args:
+            channel: A grpc.Channel.
+        """
+        self.Ping = channel.unary_unary(
+                '/ClientService/Ping',
+                request_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.Empty.FromString,
+                )
+        self.Stop = channel.unary_unary(
+                '/ClientService/Stop',
+                request_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.Empty.FromString,
+                )
+        self.SendMessage = channel.unary_unary(
+                '/ClientService/SendMessage',
+                request_serializer=proto_dot_chat__pb2.SendRequest.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.Empty.FromString,
+                )
+        self.ReceiveMessage = channel.unary_unary(
+                '/ClientService/ReceiveMessage',
+                request_serializer=proto_dot_chat__pb2.ReceiveRequest.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.Message.FromString,
+                )
+
+
+class ClientServiceServicer(object):
+    """Missing associated documentation comment in .proto file."""
+
+    def Ping(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Stop(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def SendMessage(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def ReceiveMessage(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+
+def add_ClientServiceServicer_to_server(servicer, server):
+    rpc_method_handlers = {
+            'Ping': grpc.unary_unary_rpc_method_handler(
+                    servicer.Ping,
+                    request_deserializer=proto_dot_chat__pb2.Empty.FromString,
+                    response_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
+            ),
+            'Stop': grpc.unary_unary_rpc_method_handler(
+                    servicer.Stop,
+                    request_deserializer=proto_dot_chat__pb2.Empty.FromString,
+                    response_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
+            ),
+            'SendMessage': grpc.unary_unary_rpc_method_handler(
+                    servicer.SendMessage,
+                    request_deserializer=proto_dot_chat__pb2.SendRequest.FromString,
+                    response_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
+            ),
+            'ReceiveMessage': grpc.unary_unary_rpc_method_handler(
+                    servicer.ReceiveMessage,
+                    request_deserializer=proto_dot_chat__pb2.ReceiveRequest.FromString,
+                    response_serializer=proto_dot_chat__pb2.Message.SerializeToString,
+            ),
+    }
+    generic_handler = grpc.method_handlers_generic_handler(
+            'ClientService', rpc_method_handlers)
+    server.add_generic_rpc_handlers((generic_handler,))
+
+
+ # This class is part of an EXPERIMENTAL API.
+class ClientService(object):
+    """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def Ping(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ClientService/Ping',
+            proto_dot_chat__pb2.Empty.SerializeToString,
+            proto_dot_chat__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Stop(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ClientService/Stop',
+            proto_dot_chat__pb2.Empty.SerializeToString,
+            proto_dot_chat__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def SendMessage(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ClientService/SendMessage',
+            proto_dot_chat__pb2.SendRequest.SerializeToString,
+            proto_dot_chat__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def ReceiveMessage(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ClientService/ReceiveMessage',
+            proto_dot_chat__pb2.ReceiveRequest.SerializeToString,
+            proto_dot_chat__pb2.Message.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

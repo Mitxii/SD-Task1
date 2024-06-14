@@ -21,3 +21,27 @@ class RegisterResponse(_message.Message):
     success: bool
     body: str
     def __init__(self, success: bool = ..., body: _Optional[str] = ...) -> None: ...
+
+class SendRequest(_message.Message):
+    __slots__ = ("username", "message")
+    USERNAME_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
+    username: str
+    message: str
+    def __init__(self, username: _Optional[str] = ..., message: _Optional[str] = ...) -> None: ...
+
+class Empty(_message.Message):
+    __slots__ = ()
+    def __init__(self) -> None: ...
+
+class ReceiveRequest(_message.Message):
+    __slots__ = ("username",)
+    USERNAME_FIELD_NUMBER: _ClassVar[int]
+    username: str
+    def __init__(self, username: _Optional[str] = ...) -> None: ...
+
+class Message(_message.Message):
+    __slots__ = ("body",)
+    BODY_FIELD_NUMBER: _ClassVar[int]
+    body: str
+    def __init__(self, body: _Optional[str] = ...) -> None: ...
