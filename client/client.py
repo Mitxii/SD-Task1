@@ -1,9 +1,99 @@
 import grpc
 import colorama
+import argparse
+import yaml
+import re
+import time
+import os
+import threading
+from concurrent import futures
 
 # Importar classes gRPC
 from proto import chat_pb2
 from proto import chat_pb2_grpc
 
-# Inicialitzar biblioteca de colors per la terminal
-colorama.init()
+# Importar altres classes
+from client_class import Client
+
+class ClientServicer(chat_pb2_grpc.ClientServiceServicer):
+    
+    # Constructor
+    def __init__(self, client):
+        self.client = client
+        
+    def SendMessage(self, request, context):
+        pass
+    
+    def ReceiveMessage(self, request, context):
+        pass
+    
+def serve(ip, port):
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    chat_pb2_grpc.add_ClientServiceServicer_to_server(ClientServicer(server), server)
+    server.add_insecure_port(f'{ip}:{port}')
+    server.start()
+    
+if __name__ == "__main__":
+    
+    # Inicialitzar biblioteca de colors per la terminal
+    colorama.init()
+
+    # Crear l'analitzador d'arguments per obtenir l'adreça del client (ip:port)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ip", type=str)
+    parser.add_argument("--port", type=int)
+    ip = parser.parse_args().ip
+    port = parser.parse_args().port
+    serve(ip, port)
+    
+    # Obtenir dades del fitxer config
+    with open("config.yaml", "r") as config_file:
+        config = yaml.safe_load(config_file)
+    server = config["server"]
+    server_ip = server["ip"]
+    server_grpc_port = server["grpc_port"]
+    
+    # Obrir canal gRPC i crear un stub
+    channel = grpc.insecure_channel(f"{server_ip}:{server_grpc_port}")
+    stub = chat_pb2_grpc.CentralServerStub(channel)
+    
+    # Bucle per obtenir un nom d'usuari disponible
+    while True:
+        # Demanar nom d'usuari
+        username = input("Introdueix usuari: ")
+        # Eliminar caràcters especials
+        username = re.sub(r"[^A-Za-z0-9\s]", "", username)
+        # Registrar client
+        response = stub.RegisterClient(chat_pb2.RegisterRequest(username=username, ip=ip, port=port))
+        if response.success:
+            client = Client(username, ip, port, stub)
+            print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} T'has registrat correctament.")
+            break
+        else:
+            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} {response.body}")
+
+    # Esperar mig segon i netejar terminal
+    time.sleep(0.5)
+    os.system("cls" if os.name == "nt" else "clear")
+    
+    # Missatge de benvinguda
+    os.system(f"echo 'Bones, \033[33m{username}\\033]0;{username}\\007\033[0m!'")
+    print(f"\n\t{colorama.Back.YELLOW + colorama.Fore.BLACK} [P]rivat | [G]rupal | [D]escobrir | [I]nsults | [S]ortir {colorama.Back.RESET + colorama.Fore.RESET}\n")
+
+    # Bucle principal del client
+    while True:
+        option = input("Opció: ").upper()
+        match option:
+            case "P":
+                break                
+            case "G":
+                break
+            case "D":
+                break
+            case "I":
+                break
+            case "S":
+                print(f"Fins aviat {colorama.Fore.YELLOW + username + colorama.Fore.RESET}!")
+                break
+            case default:
+                print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} Opció invàlida. Tria'n una de vàlida.{colorama.Fore.RESET}")

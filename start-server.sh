@@ -28,8 +28,8 @@ ip=$(hostname -I | awk '{print $1}')
 
 # Guardar variables al fitxer config
 echo "server:" > config.yaml
-echo -e "\tip: $ip" >> config.yaml
-echo -e "\tgrpc_port: $port" >> config.yaml
+echo "  ip: $ip" >> config.yaml
+echo "  grpc_port: $port" >> config.yaml
 
 # Agregar directori 'proto' al sys.path
 PROTO_ABS_DIR=$(realpath "./proto")

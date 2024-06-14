@@ -27,44 +27,20 @@ class CentralServer(chat_pb2_grpc.CentralServerServicer):
         port = request.port
         response = name_server.register_client(username, ip, port)
         return chat_pb2.RegisterResponse(success=response[0], body=response[1])
-    
-    # Mètode per aturar tots els clients
-    def StopClients(self):
-        clients = name_server.get_all_clients()
-        
-        # Recórrer tots els clients
-        for username, info in clients.items():
-            ip = info["ip"]
-            port = port["port"]
-            address = f"{ip}:{port}"
-            
-            with grpc.insecure_channel(address) as channel:
-                stub = chat_pb2_grpc.ClientServiceStub(channel)
-                try:
-                    # Aturar client
-                    stub.Stop(chat_pb2.Empty())
-                    self.logger.success(f"Client '{username}' aturat")
-                except grpc.RpcError as e:
-                    self.logger.error(f"No s'ha pogut aturar el client '{username}'")
 
 # Mètode per iniciar el servidor gRPC
 def serve(port):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     servicer = CentralServer()
     chat_pb2_grpc.add_CentralServerServicer_to_server(servicer, server)
-    server.add_insecure_port(f'localhost:{port}')
+    server.add_insecure_port(f'[::]:{port}')
     server.start()
     servicer.logger.log(f'Servidor central iniciat. Escoltant al port {port}...')
 
     # Funció per gestionar les senyals SIGINT i SIGTERM
     def signal_handler(sig, frame):
-        # Aturar clients
-        servicer.logger.log("Aturant clients...")
-        servicer.StopClients()
-        # Aturar servidor
         servicer.logger.log("Aturant servidor central...")
         server.stop(0)
-        servicer.logger.success("Servidor central aturat")
         time.sleep(1)
         sys.exit(0)
         
@@ -83,8 +59,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int)
     port = parser.parse_args().port
-    
     serve(port)
+    
     
     
     

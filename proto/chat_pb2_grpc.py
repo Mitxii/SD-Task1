@@ -80,11 +80,6 @@ class ClientServiceStub(object):
                 request_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
                 response_deserializer=proto_dot_chat__pb2.Empty.FromString,
                 )
-        self.Stop = channel.unary_unary(
-                '/ClientService/Stop',
-                request_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
-                response_deserializer=proto_dot_chat__pb2.Empty.FromString,
-                )
         self.SendMessage = channel.unary_unary(
                 '/ClientService/SendMessage',
                 request_serializer=proto_dot_chat__pb2.SendRequest.SerializeToString,
@@ -101,12 +96,6 @@ class ClientServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def Ping(self, request, context):
-        """Missing associated documentation comment in .proto file."""
-        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
-        context.set_details('Method not implemented!')
-        raise NotImplementedError('Method not implemented!')
-
-    def Stop(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -129,11 +118,6 @@ def add_ClientServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'Ping': grpc.unary_unary_rpc_method_handler(
                     servicer.Ping,
-                    request_deserializer=proto_dot_chat__pb2.Empty.FromString,
-                    response_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
-            ),
-            'Stop': grpc.unary_unary_rpc_method_handler(
-                    servicer.Stop,
                     request_deserializer=proto_dot_chat__pb2.Empty.FromString,
                     response_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
             ),
@@ -169,23 +153,6 @@ class ClientService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ClientService/Ping',
-            proto_dot_chat__pb2.Empty.SerializeToString,
-            proto_dot_chat__pb2.Empty.FromString,
-            options, channel_credentials,
-            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
-
-    @staticmethod
-    def Stop(request,
-            target,
-            options=(),
-            channel_credentials=None,
-            call_credentials=None,
-            insecure=False,
-            compression=None,
-            wait_for_ready=None,
-            timeout=None,
-            metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ClientService/Stop',
             proto_dot_chat__pb2.Empty.SerializeToString,
             proto_dot_chat__pb2.Empty.FromString,
             options, channel_credentials,

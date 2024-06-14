@@ -17,7 +17,6 @@ message RegisterResponse {
 
 service ClientService {
     rpc Ping(Empty) returns (Empty) {}
-    rpc Stop(Empty) returns (Empty) {}
 
     rpc SendMessage(SendRequest) returns (Empty) {}
     rpc ReceiveMessage(ReceiveRequest) returns (Message) {}

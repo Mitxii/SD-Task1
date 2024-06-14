@@ -40,7 +40,7 @@ class NameServer:
     # Mètode per obtenir tots els clients
     def get_all_clients(self):
         clients = self.redis.hgetall("clients")
-        return {username: json.loads(info) for username, info in clients.items()}
+        return {username.decode('utf-8'): json.loads(info.decode('utf-8')) for username, info in clients.items()}
     
 name_server = NameServer()
         
