@@ -10,17 +10,14 @@ from proto import chat_pb2_grpc
 class PrivateChat():
     
     # Constructor
-    def __init__(self, client, other_username, other_ip, other_port, other_stub=None):
+    def __init__(self, client, other_username, other_ip, other_port):
         self.client = client
         self.other_username = other_username
         self.other_ip = other_ip
         self.other_port = other_port
-        # Obrir stub o agafar el passat per paràmetre
-        if other_stub is None:
-            channel = grpc.insecure_channel(f"{other_ip}:{other_port}")
-            self.stub = chat_pb2_grpc.ClientServiceStub(channel)
-        else:
-            self.stub = other_stub
+        # Obrir stub
+        channel = grpc.insecure_channel(f"{other_ip}:{other_port}")
+        self.stub = chat_pb2_grpc.ClientServiceStub(channel)
         # Cua de missatges
         self.messages = []
         # Obrir chat privat en un thread

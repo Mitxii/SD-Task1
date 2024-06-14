@@ -118,7 +118,7 @@ class Client:
             print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} L'altre usuari ha acceptat la petició")
             # Crear i guardar chat privat
             print("Obrint chat...")
-            chat = PrivateChat(self, other_username, other_ip, other_port, other_stub)
+            chat = PrivateChat(self, other_username, other_ip, other_port)
             self.private_chats[other_username] = chat
     
     # Mètode per tancar un chat privat    
