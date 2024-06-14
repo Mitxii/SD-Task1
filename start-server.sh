@@ -63,10 +63,9 @@ fi
 # Crear directori per guardar les dades de RabbitMQ
 mkdir -p rabbitmq_data
 
-# Aturar contenidor RabbitMQ en cas de que estigui encés i eliminar-lo per assegurar la nova configuració
+# Aturar contenidor RabbitMQ en cas de que estigui encés
 echo "Reiniciant RabbitMQ..."
 docker stop rabbitmq > /dev/null 2>&1
-docker rm rabbitmq > /dev/null 2>&1
 
 # Iniciar RabbitMQ en un contenidor Docker
 docker-compose up -d

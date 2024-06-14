@@ -2,7 +2,6 @@ syntax = "proto3";
 
 service CentralServer {
     rpc Heartbeat(Empty) returns (Empty) {}
-
     rpc RegisterClient(RegisterRequest) returns (RegisterResponse) {}
     rpc GetClientInfo(GetInfoRequest) returns (GetInfoResponse) {}
 }
@@ -31,9 +30,7 @@ message GetInfoResponse {
 
 service ClientService {
     rpc Heartbeat(Empty) returns (Empty) {}
-
     rpc Connection(ConnectionRequest) returns (ConnectionResponse) {}
-
     rpc SendMessage(Message) returns (Empty) {}
 }
 

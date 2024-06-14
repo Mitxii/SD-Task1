@@ -38,14 +38,19 @@ class ClientServicer(chat_pb2_grpc.ClientServiceServicer):
         self.client.send_message_to(username, message, time)
         return chat_pb2.Empty()
 
+# Mètode per llegir el fitxer de configuració
+def read_config(file):
+    with open(file, "r") as config_file:
+        config = yaml.safe_load(config_file)
+        return config["server"]
+
 # Mètode per registrar el client al servidor central
 def register_client(ip, port):
     # Obtenir dades del fitxer config.yaml
-    with open("config.yaml", "r") as config_file:
-        config = yaml.safe_load(config_file)
-    server = config["server"]
+    server = read_config("config.yaml")
     server_ip = server["ip"]
     server_grpc_port = server["grpc_port"]
+    server_rabbit_port = server["rabbit_port"]
     
     # Obrir canal gRPC i crear un stub
     channel = grpc.insecure_channel(f"{server_ip}:{server_grpc_port}")
@@ -61,7 +66,7 @@ def register_client(ip, port):
         try:
             response = server_stub.RegisterClient(chat_pb2.RegisterRequest(username=username, ip=ip, port=port))
             if response.success:
-                client = Client(username, ip, port, server_stub)
+                client = Client(username, ip, port, server_stub, server_ip, server_rabbit_port)
                 print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} T'has registrat correctament.")
                 break
             else:
@@ -130,7 +135,7 @@ if __name__ == "__main__":
             case "P":
                 client.connect_chat()              
             case "G":
-                break
+                client.connect_group()
             case "D":
                 break
             case "I":

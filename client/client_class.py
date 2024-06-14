@@ -3,6 +3,7 @@ import threading
 import time
 import os
 import colorama
+import pika
 import tkinter as tk
 
 # Importar classes gRPC
@@ -11,17 +12,24 @@ from proto import chat_pb2_grpc
 
 # Importar altres classes
 from private_chat import PrivateChat
+from group_chat import GroupChat
 
 class Client:
     
     # Constructor
-    def __init__(self, username, ip, port, server_stub):
+    def __init__(self, username, ip, port, server_stub, server_ip, server_rabbit_port):
         self.username = username
         self.ip = ip
         self.port = port
+        # Dades per gRPC
         self.server_stub = server_stub
+        # Dades per RabbitMQ
+        self.server_ip = server_ip
+        self.server_rabbit_port = server_rabbit_port
         # Chats privats actius
         self.private_chats = {}
+        # Chats grupals actius
+        self.group_chats = {}
         # Inicialitzar biblioteca de colors per la terminal
         colorama.init()
         # Llançar thread per enviar senyals al client
@@ -137,3 +145,51 @@ class Client:
             chat = self.private_chats[other_username]
             # Enviar missatge
             chat.display_message(message, time, "left")
+            
+    # Mètode per connectar-se a RabbitMQ
+    def connect_to_rabbit(self):
+        credentials = pika.PlainCredentials("user", "password")
+        parameters = pika.ConnectionParameters(self.server_ip, self.server_rabbit_port, '/', credentials)
+        connection = pika.BlockingConnection(parameters)
+        channel = connection.channel()
+        return connection, channel
+    
+    # Mètode per subscriure a un chat grupal
+    def connect_group(self):
+        connection, channel = self.connect_to_rabbit()
+        group_name = input("Introdueix el nom del grup: ")
+        
+        # Comprovacions inicials
+        if group_name in self.group_chats:
+            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} Ja tens aquest chat grupal obert")
+            return
+        
+        # Comprovar si ja existeix un grup amb el nom especificat
+        try: 
+            channel.exchange_declare(exchange=group_name, exchange_type="fanout", passive=True)
+        except Exception:
+            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha trobat el grup especificat")
+            # Reconnectar a RabbitMQ
+            connection, channel = self.connect_to_rabbit()
+            # Demanar si vol persistència
+            persistent = False
+            while True:
+                option = input("Vols que el chat sigui persistent? [Y]es [N]o ").upper()
+                match option:
+                    case "Y":
+                        persistent = True
+                        break
+                    case "N":
+                        break
+                    case default:
+                        print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} Opció invàlida. Tria'n una de vàlida.{colorama.Fore.RESET}")
+            # Crear grup
+            print("Creant grup...")
+            channel.exchange_declare(exchange=group_name, exchange_type='fanout', durable=persistent)
+            print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} S'ha creat el chat grupal")
+        
+        print("Obrint chat...")
+        chat = GroupChat(self, group_name, channel)
+        self.group_chats[group_name] = chat
+        
+        
