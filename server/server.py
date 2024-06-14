@@ -19,7 +19,11 @@ class CentralServer(chat_pb2_grpc.CentralServerServicer):
     def __init__(self):
         # Inicialitzar logger
         self.logger = ServerLog(self)
-        
+    
+    # Mètode per donar senyal de vida
+    def Heartbeat(self, request, context):
+        return chat_pb2.Empty()
+    
     # Mètode per registrar un client
     def RegisterClient(self, request, context):
         username = request.username

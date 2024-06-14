@@ -14,6 +14,11 @@ class CentralServerStub(object):
         Args:
             channel: A grpc.Channel.
         """
+        self.Heartbeat = channel.unary_unary(
+                '/CentralServer/Heartbeat',
+                request_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.Empty.FromString,
+                )
         self.RegisterClient = channel.unary_unary(
                 '/CentralServer/RegisterClient',
                 request_serializer=proto_dot_chat__pb2.RegisterRequest.SerializeToString,
@@ -24,6 +29,12 @@ class CentralServerStub(object):
 class CentralServerServicer(object):
     """Missing associated documentation comment in .proto file."""
 
+    def Heartbeat(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def RegisterClient(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -33,6 +44,11 @@ class CentralServerServicer(object):
 
 def add_CentralServerServicer_to_server(servicer, server):
     rpc_method_handlers = {
+            'Heartbeat': grpc.unary_unary_rpc_method_handler(
+                    servicer.Heartbeat,
+                    request_deserializer=proto_dot_chat__pb2.Empty.FromString,
+                    response_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
+            ),
             'RegisterClient': grpc.unary_unary_rpc_method_handler(
                     servicer.RegisterClient,
                     request_deserializer=proto_dot_chat__pb2.RegisterRequest.FromString,
@@ -47,6 +63,23 @@ def add_CentralServerServicer_to_server(servicer, server):
  # This class is part of an EXPERIMENTAL API.
 class CentralServer(object):
     """Missing associated documentation comment in .proto file."""
+
+    @staticmethod
+    def Heartbeat(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/CentralServer/Heartbeat',
+            proto_dot_chat__pb2.Empty.SerializeToString,
+            proto_dot_chat__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
     @staticmethod
     def RegisterClient(request,
@@ -75,8 +108,8 @@ class ClientServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
-        self.Ping = channel.unary_unary(
-                '/ClientService/Ping',
+        self.Heartbeat = channel.unary_unary(
+                '/ClientService/Heartbeat',
                 request_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
                 response_deserializer=proto_dot_chat__pb2.Empty.FromString,
                 )
@@ -95,7 +128,7 @@ class ClientServiceStub(object):
 class ClientServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
-    def Ping(self, request, context):
+    def Heartbeat(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -116,8 +149,8 @@ class ClientServiceServicer(object):
 
 def add_ClientServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
-            'Ping': grpc.unary_unary_rpc_method_handler(
-                    servicer.Ping,
+            'Heartbeat': grpc.unary_unary_rpc_method_handler(
+                    servicer.Heartbeat,
                     request_deserializer=proto_dot_chat__pb2.Empty.FromString,
                     response_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
             ),
@@ -142,7 +175,7 @@ class ClientService(object):
     """Missing associated documentation comment in .proto file."""
 
     @staticmethod
-    def Ping(request,
+    def Heartbeat(request,
             target,
             options=(),
             channel_credentials=None,
@@ -152,7 +185,7 @@ class ClientService(object):
             wait_for_ready=None,
             timeout=None,
             metadata=None):
-        return grpc.experimental.unary_unary(request, target, '/ClientService/Ping',
+        return grpc.experimental.unary_unary(request, target, '/ClientService/Heartbeat',
             proto_dot_chat__pb2.Empty.SerializeToString,
             proto_dot_chat__pb2.Empty.FromString,
             options, channel_credentials,

@@ -5,7 +5,7 @@ import yaml
 import re
 import time
 import os
-import threading
+import signal
 from concurrent import futures
 
 # Importar classes gRPC
@@ -21,6 +21,10 @@ class ClientServicer(chat_pb2_grpc.ClientServiceServicer):
     def __init__(self):
         self.client = client
     
+    # Mètode per donar senyal de vida
+    def Heartbeat(self, request, context):
+        return chat_pb2.Empty()
+    
     # Mètode per enviar un missatge
     def SendMessage(self, request, context):
         pass
@@ -31,7 +35,7 @@ class ClientServicer(chat_pb2_grpc.ClientServiceServicer):
 
 # Mètode per registrar el client al servidor central
 def register_client(ip, port):
-    # Obtenir dades del fitxer config
+    # Obtenir dades del fitxer config.yaml
     with open("config.yaml", "r") as config_file:
         config = yaml.safe_load(config_file)
     server = config["server"]
@@ -67,7 +71,7 @@ def serve(client):
     servicer.start()
     
     return servicer
-    
+
 # Main
 if __name__ == "__main__":
     
@@ -87,6 +91,14 @@ if __name__ == "__main__":
     
     # Iniciar servicer
     servicer = serve(client)
+
+    # Funció per gestionar les senyals SIGINT i SIGTERM
+    def signal_handler(sig, frame):
+        client.stop_client()
+
+    # Assignar el gestor de senyals per SIGINT i SIGTERM
+    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGTERM, signal_handler)
 
     # Esperar mig segon i netejar terminal
     time.sleep(0.5)

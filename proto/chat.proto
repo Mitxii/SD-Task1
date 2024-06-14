@@ -1,8 +1,12 @@
 syntax = "proto3";
 
 service CentralServer {
+    rpc Heartbeat(Empty) returns (Empty) {}
+
     rpc RegisterClient(RegisterRequest) returns (RegisterResponse) {}
 }
+
+message Empty {}
 
 message RegisterRequest {
     string username = 1;
@@ -16,7 +20,7 @@ message RegisterResponse {
 }
 
 service ClientService {
-    rpc Ping(Empty) returns (Empty) {}
+    rpc Heartbeat(Empty) returns (Empty) {}
 
     rpc SendMessage(SendRequest) returns (Empty) {}
     rpc ReceiveMessage(ReceiveRequest) returns (Message) {}
@@ -26,8 +30,6 @@ message SendRequest {
     string username = 1;
     string message = 2;
 }
-
-message Empty {}
 
 message ReceiveRequest {
     string username = 1;
