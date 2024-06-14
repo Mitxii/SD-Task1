@@ -49,6 +49,10 @@ class Client:
     def connection(self, other_username):
         self.accept = False
         
+        # Comprovar que no tingui ja un chat obert amb l'altre client
+        if other_username in self.private_chats:
+            return False
+        
         # Funció per respondre una sol·licitud de chat (acceptar o denegar)
         def answer_connection(bool):
             root.destroy()
@@ -63,6 +67,7 @@ class Client:
                     # Crear i guardar chat privat
                     chat = PrivateChat(self, other_username, other_ip, other_port)
                     self.private_chats[other_username] = chat
+            # Guardar resultat
             self.accept = bool
         
         # Configurar finestra per respondre la sol·licitud
@@ -113,7 +118,7 @@ class Client:
         other_stub = chat_pb2_grpc.ClientServiceStub(channel)
         response = other_stub.Connection(chat_pb2.ConnectionRequest(username=self.username))
         if not response.accept:
-            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} L'altre usuari ha denegat la petició")
+            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} L'altre usuari ha denegat la petició o encara té el chat anterior obert")
         else:
             print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} L'altre usuari ha acceptat la petició")
             # Crear i guardar chat privat
@@ -121,7 +126,7 @@ class Client:
             chat = PrivateChat(self, other_username, other_ip, other_port)
             self.private_chats[other_username] = chat
     
-    # Mètode per tancar un chat privat    
+    # Mètode per eliminar un chat privat    
     def close_chat(self, other_username):
         if other_username in self.private_chats:
             self.private_chats.pop(other_username)

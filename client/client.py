@@ -76,8 +76,13 @@ def register_client(ip, port):
 def serve(client):
     servicer = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     chat_pb2_grpc.add_ClientServiceServicer_to_server(ClientServicer(), servicer)
-    servicer.add_insecure_port(f'{client.ip}:{client.port}')
-    servicer.start()
+    try:
+        servicer.add_insecure_port(f'{client.ip}:{client.port}')
+        servicer.start()
+    except Exception:
+        print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} S'ha produit un error configurant el Servicer")
+        time.sleep(1)
+        os._exit(0)
     
     return servicer
 
