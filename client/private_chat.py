@@ -27,12 +27,12 @@ class PrivateChat():
         threading.Thread(target=self.open_chat).start()
         
     # Mètode per gestionar la desconnexió de l'altre client
-    def hearbeat_other(self):
-        while True:
+    def heartbeat_other(self):
+        while self.heartbeat:
             try:
                 self.stub.Heartbeat(chat_pb2.Empty())
             except grpc.RpcError:
-                self.display_message("EXIT", "left")
+                self.display_message("EXIT", "", "left")
                 return
             time.sleep(1)
     
@@ -42,12 +42,15 @@ class PrivateChat():
         self.chat.destroy()
         # Eliminar de chats actius del client
         self.client.close_chat(self.other_username)
+        # Aturar thread per als heartbeats
+        self.heartbeat = False
     
     # Mètode per obrir el chat privat
     def open_chat(self):
         self.root = tk.Tk()
         self.root.withdraw()
         
+        # Temps de l'últim missatge
         self.last = "00:00"
         
         # Funció per enviar un missatge
@@ -92,7 +95,8 @@ class PrivateChat():
         self.chat.protocol("WM_DELETE_WINDOW", close_chat)
         
         # Gestionar desconnexió de l'altre client
-        threading.Thread(target=self.hearbeat_other).start()
+        self.heartbeat = True
+        threading.Thread(target=self.heartbeat_other).start()
 
         # Llançar finestra
         self.chat.mainloop()

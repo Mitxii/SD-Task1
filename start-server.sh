@@ -30,10 +30,17 @@ ip=$(hostname -I | awk '{print $1}')
 echo "server:" > config.yaml
 echo "  ip: $ip" >> config.yaml
 echo "  grpc_port: $port" >> config.yaml
+echo "  rabbit_port: 5672" >> config.yaml
 
 # Agregar directori 'proto' al sys.path
 PROTO_ABS_DIR=$(realpath "./proto")
 export PYTHONPATH="$PROTO_ABS_DIR:$PYTHONPATH"
+
+# Aturar contenidor RabbitMQ en cas de que estigui encés
+docker stop rabbitmq > /dev/null 2>&1
+
+# Iniciar RabbitMQ en un contenidor Docker
+gnome-terminal --title RabbitMQ -e "docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.13-management" 2> /dev/null
 
 # Canviar entorn python
 source venv/bin/activate

@@ -1,3 +1,4 @@
 server:
   ip: 10.0.2.15
   grpc_port: 50000
+  rabbit_port: 5672
