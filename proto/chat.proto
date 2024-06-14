@@ -34,8 +34,7 @@ service ClientService {
 
     rpc Connection(ConnectionRequest) returns (ConnectionResponse) {}
 
-    rpc SendMessage(SendRequest) returns (Empty) {}
-    rpc ReceiveMessage(ReceiveRequest) returns (Message) {}
+    rpc SendMessage(Message) returns (Empty) {}
 }
 
 message ConnectionRequest {
@@ -46,15 +45,7 @@ message ConnectionResponse {
     bool accept = 1;
 }
 
-message SendRequest {
-    string username = 1;
-    string message = 2;
-}
-
-message ReceiveRequest {
-    string username = 1;
-}
-
 message Message {
-    string body = 1;
+    string username = 1;
+    string body = 2;
 }

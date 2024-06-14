@@ -25,17 +25,17 @@ class ClientServicer(chat_pb2_grpc.ClientServiceServicer):
     def Heartbeat(self, request, context):
         return chat_pb2.Empty()
     
+    # Mètode per fer una petició de chat privat
     def Connection(self, request, context):
         accept = self.client.connection(request.username)
         return chat_pb2.ConnectionResponse(accept=accept)
         
     # Mètode per enviar un missatge
     def SendMessage(self, request, context):
-        pass
-    
-    # Mètode per rebre un missatge
-    def ReceiveMessage(self, request, context):
-        pass
+        username = request.username
+        message = request.body
+        self.client.send_message_to(username, message)
+        return chat_pb2.Empty()
 
 # Mètode per registrar el client al servidor central
 def register_client(ip, port):

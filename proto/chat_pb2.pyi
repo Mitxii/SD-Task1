@@ -52,22 +52,10 @@ class ConnectionResponse(_message.Message):
     accept: bool
     def __init__(self, accept: bool = ...) -> None: ...
 
-class SendRequest(_message.Message):
-    __slots__ = ("username", "message")
-    USERNAME_FIELD_NUMBER: _ClassVar[int]
-    MESSAGE_FIELD_NUMBER: _ClassVar[int]
-    username: str
-    message: str
-    def __init__(self, username: _Optional[str] = ..., message: _Optional[str] = ...) -> None: ...
-
-class ReceiveRequest(_message.Message):
-    __slots__ = ("username",)
-    USERNAME_FIELD_NUMBER: _ClassVar[int]
-    username: str
-    def __init__(self, username: _Optional[str] = ...) -> None: ...
-
 class Message(_message.Message):
-    __slots__ = ("body",)
+    __slots__ = ("username", "body")
+    USERNAME_FIELD_NUMBER: _ClassVar[int]
     BODY_FIELD_NUMBER: _ClassVar[int]
+    username: str
     body: str
-    def __init__(self, body: _Optional[str] = ...) -> None: ...
+    def __init__(self, username: _Optional[str] = ..., body: _Optional[str] = ...) -> None: ...

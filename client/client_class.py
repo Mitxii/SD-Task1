@@ -61,7 +61,7 @@ class Client:
                     bool = False
                 else:
                     # Crear i guardar chat privat
-                    chat = PrivateChat(other_username, other_ip, other_port)
+                    chat = PrivateChat(self, other_username, other_ip, other_port)
                     self.private_chats[other_username] = chat
             self.accept = bool
         
@@ -118,5 +118,17 @@ class Client:
             print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} L'altre usuari ha acceptat la petició")
             # Crear i guardar chat privat
             print("Obrint chat...")
-            chat = PrivateChat(other_username, other_ip, other_port, other_stub)
+            chat = PrivateChat(self, other_username, other_ip, other_port, other_stub)
             self.private_chats[other_username] = chat
+    
+    # Mètode per tancar un chat privat    
+    def close_chat(self, other_username):
+        if other_username in self.private_chats:
+            self.private_chats.pop(other_username)
+           
+    # Mètode per enviar un missatge 
+    def send_message_to(self, other_username, message):
+        if other_username in self.private_chats:
+            chat = self.private_chats[other_username]
+            # Enviar missatge
+            chat.display_message(message, "left")
