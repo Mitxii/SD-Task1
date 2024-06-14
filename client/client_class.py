@@ -167,8 +167,9 @@ class Client:
         # Comprovar si ja existeix un grup amb el nom especificat
         try: 
             channel.exchange_declare(exchange=group_name, exchange_type="fanout", passive=True)
+            print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} S'ha trobat el grup")
         except Exception:
-            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha trobat el grup especificat")
+            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha trobat el grup. Configurant...")
             # Reconnectar a RabbitMQ
             connection, channel = self.connect_to_rabbit()
             # Demanar si vol persistència
@@ -191,5 +192,10 @@ class Client:
         print("Obrint chat...")
         chat = GroupChat(self, group_name, channel)
         self.group_chats[group_name] = chat
+        
+    # Mètode per eliminar un chat grupal    
+    def close_group_chat(self, group_name):
+        if group_name in self.group_chats:
+            self.group_chats.pop(group_name)
         
         
