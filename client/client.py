@@ -18,21 +18,57 @@ from client_class import Client
 class ClientServicer(chat_pb2_grpc.ClientServiceServicer):
     
     # Constructor
-    def __init__(self, client):
+    def __init__(self):
         self.client = client
-        
+    
+    # Mètode per enviar un missatge
     def SendMessage(self, request, context):
         pass
     
+    # Mètode per rebre un missatge
     def ReceiveMessage(self, request, context):
         pass
+
+# Mètode per registrar el client al servidor central
+def register_client(ip, port):
+    # Obtenir dades del fitxer config
+    with open("config.yaml", "r") as config_file:
+        config = yaml.safe_load(config_file)
+    server = config["server"]
+    server_ip = server["ip"]
+    server_grpc_port = server["grpc_port"]
     
-def serve(ip, port):
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    chat_pb2_grpc.add_ClientServiceServicer_to_server(ClientServicer(server), server)
-    server.add_insecure_port(f'{ip}:{port}')
-    server.start()
+    # Obrir canal gRPC i crear un stub
+    channel = grpc.insecure_channel(f"{server_ip}:{server_grpc_port}")
+    server_stub = chat_pb2_grpc.CentralServerStub(channel)
     
+    # Bucle per obtenir un nom d'usuari disponible
+    while True:
+        # Demanar nom d'usuari
+        username = input("Introdueix usuari: ")
+        # Eliminar caràcters especials
+        username = re.sub(r"[^A-Za-z0-9\s]", "", username)
+        # Registrar client
+        response = server_stub.RegisterClient(chat_pb2.RegisterRequest(username=username, ip=ip, port=port))
+        if response.success:
+            client = Client(username, ip, port, server_stub)
+            print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} T'has registrat correctament.")
+            break
+        else:
+            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} {response.body}")
+            
+    return client
+
+# Mètode per iniciar el servicer
+def serve(client):
+    servicer = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
+    chat_pb2_grpc.add_ClientServiceServicer_to_server(ClientServicer(), servicer)
+    servicer.add_insecure_port(f'{client.ip}:{client.port}')
+    servicer.start()
+    
+    return servicer
+    
+# Main
 if __name__ == "__main__":
     
     # Inicialitzar biblioteca de colors per la terminal
@@ -44,33 +80,13 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int)
     ip = parser.parse_args().ip
     port = parser.parse_args().port
-    serve(ip, port)
     
-    # Obtenir dades del fitxer config
-    with open("config.yaml", "r") as config_file:
-        config = yaml.safe_load(config_file)
-    server = config["server"]
-    server_ip = server["ip"]
-    server_grpc_port = server["grpc_port"]
+    # Registrar client
+    client = register_client(ip, port)
+    username = client.username
     
-    # Obrir canal gRPC i crear un stub
-    channel = grpc.insecure_channel(f"{server_ip}:{server_grpc_port}")
-    stub = chat_pb2_grpc.CentralServerStub(channel)
-    
-    # Bucle per obtenir un nom d'usuari disponible
-    while True:
-        # Demanar nom d'usuari
-        username = input("Introdueix usuari: ")
-        # Eliminar caràcters especials
-        username = re.sub(r"[^A-Za-z0-9\s]", "", username)
-        # Registrar client
-        response = stub.RegisterClient(chat_pb2.RegisterRequest(username=username, ip=ip, port=port))
-        if response.success:
-            client = Client(username, ip, port, stub)
-            print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} T'has registrat correctament.")
-            break
-        else:
-            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} {response.body}")
+    # Iniciar servicer
+    servicer = serve(client)
 
     # Esperar mig segon i netejar terminal
     time.sleep(0.5)
