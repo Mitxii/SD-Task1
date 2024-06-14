@@ -4,6 +4,7 @@ service CentralServer {
     rpc Heartbeat(Empty) returns (Empty) {}
 
     rpc RegisterClient(RegisterRequest) returns (RegisterResponse) {}
+    rpc GetClientInfo(GetInfoRequest) returns (GetInfoResponse) {}
 }
 
 message Empty {}
@@ -19,11 +20,30 @@ message RegisterResponse {
     string body = 2;
 }
 
+message GetInfoRequest {
+    string username = 1;
+}
+
+message GetInfoResponse {
+    string ip = 1;
+    int32 port = 2;
+}
+
 service ClientService {
     rpc Heartbeat(Empty) returns (Empty) {}
 
+    rpc Connection(ConnectionRequest) returns (ConnectionResponse) {}
+
     rpc SendMessage(SendRequest) returns (Empty) {}
     rpc ReceiveMessage(ReceiveRequest) returns (Message) {}
+}
+
+message ConnectionRequest {
+    string username = 1;
+}
+
+message ConnectionResponse {
+    bool accept = 1;
 }
 
 message SendRequest {

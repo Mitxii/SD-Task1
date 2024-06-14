@@ -24,6 +24,11 @@ class CentralServerStub(object):
                 request_serializer=proto_dot_chat__pb2.RegisterRequest.SerializeToString,
                 response_deserializer=proto_dot_chat__pb2.RegisterResponse.FromString,
                 )
+        self.GetClientInfo = channel.unary_unary(
+                '/CentralServer/GetClientInfo',
+                request_serializer=proto_dot_chat__pb2.GetInfoRequest.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.GetInfoResponse.FromString,
+                )
 
 
 class CentralServerServicer(object):
@@ -41,6 +46,12 @@ class CentralServerServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def GetClientInfo(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
 
 def add_CentralServerServicer_to_server(servicer, server):
     rpc_method_handlers = {
@@ -53,6 +64,11 @@ def add_CentralServerServicer_to_server(servicer, server):
                     servicer.RegisterClient,
                     request_deserializer=proto_dot_chat__pb2.RegisterRequest.FromString,
                     response_serializer=proto_dot_chat__pb2.RegisterResponse.SerializeToString,
+            ),
+            'GetClientInfo': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetClientInfo,
+                    request_deserializer=proto_dot_chat__pb2.GetInfoRequest.FromString,
+                    response_serializer=proto_dot_chat__pb2.GetInfoResponse.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -98,6 +114,23 @@ class CentralServer(object):
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 
+    @staticmethod
+    def GetClientInfo(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/CentralServer/GetClientInfo',
+            proto_dot_chat__pb2.GetInfoRequest.SerializeToString,
+            proto_dot_chat__pb2.GetInfoResponse.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
 
 class ClientServiceStub(object):
     """Missing associated documentation comment in .proto file."""
@@ -112,6 +145,11 @@ class ClientServiceStub(object):
                 '/ClientService/Heartbeat',
                 request_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
                 response_deserializer=proto_dot_chat__pb2.Empty.FromString,
+                )
+        self.Connection = channel.unary_unary(
+                '/ClientService/Connection',
+                request_serializer=proto_dot_chat__pb2.ConnectionRequest.SerializeToString,
+                response_deserializer=proto_dot_chat__pb2.ConnectionResponse.FromString,
                 )
         self.SendMessage = channel.unary_unary(
                 '/ClientService/SendMessage',
@@ -129,6 +167,12 @@ class ClientServiceServicer(object):
     """Missing associated documentation comment in .proto file."""
 
     def Heartbeat(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
+    def Connection(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
@@ -153,6 +197,11 @@ def add_ClientServiceServicer_to_server(servicer, server):
                     servicer.Heartbeat,
                     request_deserializer=proto_dot_chat__pb2.Empty.FromString,
                     response_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
+            ),
+            'Connection': grpc.unary_unary_rpc_method_handler(
+                    servicer.Connection,
+                    request_deserializer=proto_dot_chat__pb2.ConnectionRequest.FromString,
+                    response_serializer=proto_dot_chat__pb2.ConnectionResponse.SerializeToString,
             ),
             'SendMessage': grpc.unary_unary_rpc_method_handler(
                     servicer.SendMessage,
@@ -188,6 +237,23 @@ class ClientService(object):
         return grpc.experimental.unary_unary(request, target, '/ClientService/Heartbeat',
             proto_dot_chat__pb2.Empty.SerializeToString,
             proto_dot_chat__pb2.Empty.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def Connection(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/ClientService/Connection',
+            proto_dot_chat__pb2.ConnectionRequest.SerializeToString,
+            proto_dot_chat__pb2.ConnectionResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
 

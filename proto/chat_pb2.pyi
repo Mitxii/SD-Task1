@@ -26,6 +26,32 @@ class RegisterResponse(_message.Message):
     body: str
     def __init__(self, success: bool = ..., body: _Optional[str] = ...) -> None: ...
 
+class GetInfoRequest(_message.Message):
+    __slots__ = ("username",)
+    USERNAME_FIELD_NUMBER: _ClassVar[int]
+    username: str
+    def __init__(self, username: _Optional[str] = ...) -> None: ...
+
+class GetInfoResponse(_message.Message):
+    __slots__ = ("ip", "port")
+    IP_FIELD_NUMBER: _ClassVar[int]
+    PORT_FIELD_NUMBER: _ClassVar[int]
+    ip: str
+    port: int
+    def __init__(self, ip: _Optional[str] = ..., port: _Optional[int] = ...) -> None: ...
+
+class ConnectionRequest(_message.Message):
+    __slots__ = ("username",)
+    USERNAME_FIELD_NUMBER: _ClassVar[int]
+    username: str
+    def __init__(self, username: _Optional[str] = ...) -> None: ...
+
+class ConnectionResponse(_message.Message):
+    __slots__ = ("accept",)
+    ACCEPT_FIELD_NUMBER: _ClassVar[int]
+    accept: bool
+    def __init__(self, accept: bool = ...) -> None: ...
+
 class SendRequest(_message.Message):
     __slots__ = ("username", "message")
     USERNAME_FIELD_NUMBER: _ClassVar[int]

@@ -25,6 +25,10 @@ class ClientServicer(chat_pb2_grpc.ClientServiceServicer):
     def Heartbeat(self, request, context):
         return chat_pb2.Empty()
     
+    def Connection(self, request, context):
+        accept = self.client.connection(request.username)
+        return chat_pb2.ConnectionResponse(accept=accept)
+        
     # Mètode per enviar un missatge
     def SendMessage(self, request, context):
         pass
@@ -106,14 +110,14 @@ if __name__ == "__main__":
     
     # Missatge de benvinguda
     os.system(f"echo 'Bones, \033[33m{username}\\033]0;{username}\\007\033[0m!'")
-    print(f"\n\t{colorama.Back.YELLOW + colorama.Fore.BLACK} [P]rivat | [G]rupal | [D]escobrir | [I]nsults | [S]ortir {colorama.Back.RESET + colorama.Fore.RESET}\n")
+    print(f"\n\t{colorama.Back.YELLOW + colorama.Fore.BLACK} [P]rivat | [G]rupal | [D]escobrir | [I]nsults | [S]ortir {colorama.Back.RESET + colorama.Fore.RESET}")
 
     # Bucle principal del client
     while True:
-        option = input("Opció: ").upper()
+        option = input("\nOpció: ").upper()
         match option:
             case "P":
-                break                
+                client.connect_chat()              
             case "G":
                 break
             case "D":

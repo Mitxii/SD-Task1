@@ -25,18 +25,24 @@ class NameServer:
     def exists_client(self, username):
         return self.redis.hexists("clients", username)
     
-    # Mètode per comprovar l'estat dels clients mitjançant senyals contínues
-    def heartbeat(self, username):
+    # Mètode per obtenir les dades de connexió d'un client
+    def get_client_info(self, username):
         # Comprovar que existeixi el client
         if not self.exists_client(username):
-            self.logger.error(f"No s'ha trobat el client '{username}' per fer el heartbeat")
-            return
+            self.logger.error(f"No s'ha trobat el client '{username}'")
+            return "", 0
         
-        # Obtenir dades del client
         client_info = self.redis.hget("clients", username)
         client_info = json.loads(client_info.decode("utf-8"))
         ip = client_info["ip"]
         port = client_info["port"]
+        return ip, port
+    
+    # Mètode per comprovar l'estat dels clients mitjançant senyals contínues
+    def heartbeat(self, username):
+        # Obtenir dades del client
+        ip, port = self.get_client_info(username)
+        if ip == "" and port == 0: return
         address = f"{ip}:{port}"
         
         # Esperar a que el client iniciï el servicer i enviar senyals

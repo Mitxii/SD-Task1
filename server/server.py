@@ -32,6 +32,10 @@ class CentralServer(chat_pb2_grpc.CentralServerServicer):
         response = name_server.register_client(username, ip, port)
         return chat_pb2.RegisterResponse(success=response[0], body=response[1])
 
+    def GetClientInfo(self, request, context):
+        ip, port = name_server.get_client_info(request.username)
+        return chat_pb2.GetInfoResponse(ip=ip, port=port)
+
 # Mètode per iniciar el servidor gRPC
 def serve(port):
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
