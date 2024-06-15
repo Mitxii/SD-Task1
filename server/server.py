@@ -59,6 +59,9 @@ def configure_rabbit(servicer):
     channel.exchange_declare(exchange="chat_discovery", exchange_type="fanout")
     channel.queue_declare(queue="discovery_queue")
     
+    # Crear cua pels insults
+    channel.queue_declare(queue="insults")
+    
     # Funció per processar els missatges
     def on_discovery_request(ch, method, properties, body):
         pass

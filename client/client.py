@@ -153,7 +153,7 @@ if __name__ == "__main__":
                 client.discover_chats()
             case "I":
                 # Connectar-se al canal d'insults
-                break
+                client.insult()
             case "S":
                 # Sortir
                 signal_handler(None, None, f"Fins aviat {colorama.Fore.YELLOW + username + colorama.Fore.RESET}!")

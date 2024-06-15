@@ -13,9 +13,10 @@ from proto import chat_pb2
 from proto import chat_pb2_grpc
 
 # Importar altres classes
+from client_log import ClientLog
 from private_chat import PrivateChat
 from group_chat import GroupChat
-from client_log import ClientLog
+from insult_chat import InsultChat
 
 class Client:
     
@@ -34,6 +35,7 @@ class Client:
         # Chats grupals subscrits i actius
         self.subscribed_chats = {}
         self.group_chats = {}
+        self.insult_chat = False
         # Inicialitzar biblioteca de colors per la terminal
         colorama.init()
         # Llançar thread per enviar senyals al client
@@ -384,5 +386,17 @@ class Client:
         
         if found == 0:
             self.logger.error("No hi ha grups actius.")
+    
+    # Mètode per connectar-se al chat d'insults
+    def insult(self):
         
+        # Funció per obrir el chat d'insults
+        def open_chat():
+            InsultChat(self)
         
+        # Comprovar que no estigui obert
+        if self.insult_chat:
+            self.logger.error("Ja tens el chat d'insults obert.")
+        else:
+            threading.Thread(target=open_chat).start()
+            self.insult_chat = True
