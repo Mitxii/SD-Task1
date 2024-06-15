@@ -42,6 +42,8 @@ class Client:
         self.connection, self.channel = self.connect_to_rabbit()
         # Llançar thread per el descobriment de chats
         threading.Thread(target=self.configure_discovery).start()
+        # Llançar thread per mantenir la connexió amb el servidor RabbitMQ
+        threading.Thread(target=self.ping).start()
         # Inicialitzar logger
         self.logger = ClientLog()
 
@@ -191,6 +193,13 @@ class Client:
                 pass
         channel = connection.channel()
         return connection, channel
+    
+    # Mètode per fer pings periòdics al servidor RabbitMQ per mantenir la connexió
+    def ping(self):
+        connection, channel = self.connect_to_rabbit()
+        while True:
+            channel.basic_publish(exchange="", routing_key="ping_queue", body="ping")
+            time.sleep(1)
     
     # Mètode per saber si un chat grupal és persistent
     def is_exchange_persistent(self, exchange_name):
