@@ -4,7 +4,6 @@ import time
 import datetime
 import tkinter as tk
 from tkinter import scrolledtext
-from tkinter import font
 
 # Importar classes gRPC
 from proto import chat_pb2
@@ -23,6 +22,7 @@ class PrivateChat():
         self.stub = chat_pb2_grpc.ClientServiceStub(channel)
         # Cua de missatges
         self.messages = []
+        
         # Obrir chat privat en un thread
         threading.Thread(target=self.open_chat).start()
         
@@ -70,7 +70,7 @@ class PrivateChat():
                
         # Configurar finestra de chat privat
         self.chat = tk.Toplevel(self.root)
-        self.chat.title(f"[{self.client.username}] {self.other_username}")
+        self.chat.title(f"[{self.client.username}] 👤 {self.other_username}")
         self.chat.geometry("400x500")
         # Frame per als inputs (missatges a enviar)
         self.input_frame = tk.Frame(self.chat)
@@ -114,7 +114,7 @@ class PrivateChat():
                 for widget in self.input_frame.winfo_children():
                     widget.destroy()
                 # Crear un nou missatge per notificar la desconnexió de l'altre client
-                tk.Label(self.input_frame, text="** L'altre usuari s'ha desconnectat del chat **").pack()
+                tk.Label(self.input_frame, text="</ L'altre usuari s'ha desconnectat del chat >").pack()
                 self.chat.protocol("WM_DELETE_WINDOW", self.destroy_chat)
         # Si és un altre missatge, s'imprimeix en funció de la posició
         else:
@@ -123,7 +123,7 @@ class PrivateChat():
             if time != self.last:
                 self.chat_display.insert(tk.END, f"{time}\n", f"time")
                 self.last = time
-            self.chat_display.tag_configure("time", font=font.Font(size=6), justify="center")
+            self.chat_display.tag_configure("time", font=("Helvetica", 8), justify="center")
             # Imprimir missatge
             self.chat_display.insert(tk.END, f"{message}\n", alignment)
             self.chat_display.tag_configure(alignment, justify=alignment)

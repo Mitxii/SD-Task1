@@ -4,6 +4,7 @@ import time
 import os
 import colorama
 import pika
+import requests
 import tkinter as tk
 
 # Importar classes gRPC
@@ -49,7 +50,7 @@ class Client:
             try:
                 self.server_stub.Heartbeat(chat_pb2.Empty())
             except grpc.RpcError:
-                self.stop_client("El servidor s'ha desconnectat!")
+                self.stop_client(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} El servidor s'ha desconnectat!")
                 break
             time.sleep(1)
     
@@ -154,6 +155,18 @@ class Client:
         channel = connection.channel()
         return connection, channel
     
+    def is_exchange_durable(self, exchange_name):
+        # Configurar URL de la API de gestió de RabbitMQ
+        url = f'http://user:password@{self.server_ip}:15672/api/exchanges/%2F/{exchange_name}'
+        
+        # Fer la crida GET a la API
+        response = requests.get(url)
+        if response.status_code == 200:
+            exchange_info = response.json()
+            return exchange_info.get('durable', False)
+        else:
+            return False
+    
     # Mètode per subscriure a un chat grupal
     def connect_group(self):
         connection, channel = self.connect_to_rabbit()
@@ -168,6 +181,7 @@ class Client:
         try: 
             channel.exchange_declare(exchange=group_name, exchange_type="fanout", passive=True)
             print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} S'ha trobat el grup")
+            persistent = self.is_exchange_durable(group_name)
         except Exception:
             print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha trobat el grup. Configurant...")
             # Reconnectar a RabbitMQ
@@ -190,7 +204,7 @@ class Client:
             print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} S'ha creat el chat grupal")
         
         print("Obrint chat...")
-        chat = GroupChat(self, group_name, channel)
+        chat = GroupChat(self, group_name, persistent)
         self.group_chats[group_name] = chat
         
     # Mètode per eliminar un chat grupal    

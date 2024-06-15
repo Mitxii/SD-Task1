@@ -53,8 +53,13 @@ def register_client(ip, port):
     server_rabbit_port = server["rabbit_port"]
     
     # Obrir canal gRPC i crear un stub
-    channel = grpc.insecure_channel(f"{server_ip}:{server_grpc_port}")
-    server_stub = chat_pb2_grpc.CentralServerStub(channel)
+    try:
+        channel = grpc.insecure_channel(f"{server_ip}:{server_grpc_port}")
+        server_stub = chat_pb2_grpc.CentralServerStub(channel)
+    except Exception:
+        print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha pogut connectar amb el servidor")
+        time.sleep(2)
+        os._exit(0)
     
     # Bucle per obtenir un nom d'usuari disponible
     while True:
@@ -63,18 +68,13 @@ def register_client(ip, port):
         # Eliminar caràcters especials
         username = re.sub(r"[^A-Za-z0-9\s]", "", username)
         # Registrar client
-        try:
-            response = server_stub.RegisterClient(chat_pb2.RegisterRequest(username=username, ip=ip, port=port))
-            if response.success:
-                client = Client(username, ip, port, server_stub, server_ip, server_rabbit_port)
-                print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} T'has registrat correctament.")
-                break
-            else:
-                print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} {response.body}")
-        except grpc.RpcError:
-            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha pogut connectar amb el servidor")
-            time.sleep(1)
-            os._exit(0)
+        response = server_stub.RegisterClient(chat_pb2.RegisterRequest(username=username, ip=ip, port=port))
+        if response.success:
+            client = Client(username, ip, port, server_stub, server_ip, server_rabbit_port)
+            print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} T'has registrat correctament.")
+            break
+        else:
+            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} {response.body}")
             
     return client
 

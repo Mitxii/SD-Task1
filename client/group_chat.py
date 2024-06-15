@@ -1,28 +1,62 @@
 import threading
 import datetime
+import pika
+import json
 import tkinter as tk
 from tkinter import scrolledtext
 
 class GroupChat():
     
     # Constructor
-    def __init__(self, client, group_name, channel):
+    def __init__(self, client, group_name, persistent):
         self.client = client
         self.group_name = group_name
-        self.channel = channel
+        # Modificar la persistència dels missatges en funció de la del exchange
+        self.persistent = 1
+        if persistent: self.persistent = 2
+        
         # Obrir chat grupal en un thread
         threading.Thread(target=self.open_chat).start()
         
+    # Mètode per connectar-se a RabbitMQ
+    def connect_to_rabbit(self):
+        credentials = pika.PlainCredentials("user", "password")
+        parameters = pika.ConnectionParameters(self.client.server_ip, self.client.server_rabbit_port, '/', credentials)
+        connection = pika.BlockingConnection(parameters)
+        channel = connection.channel()
+        return channel
+    
     # Mètode per eliminar el chat grupal
     def destroy_chat(self):
+        # Tancar els canals
+        ## TODO
         # Tancar finestra
         self.chat.destroy()
         # Eliminar de chats actius del client
         self.client.close_group_chat(self.group_name)
 
+    # Mètode per consumir la cua i rebre els missatges
+    def start_consuming(self):
+        self.listen_channel = self.connect_to_rabbit()
+        result = self.listen_channel.queue_declare(queue="", exclusive=True)
+        queue_name = result.method.queue
+        self.listen_channel.queue_bind(exchange=self.group_name, queue=queue_name)
+        self.listen_channel.basic_consume(queue=queue_name, on_message_callback=self.receive_message, auto_ack=True)
+        self.listen_channel.start_consuming()
+
+    # Mètode per obrir el chat grupal
     def open_chat(self):
         self.root = tk.Tk()
         self.root.withdraw()
+        
+        # Obrir connexió
+        self.channel = self.connect_to_rabbit()
+        
+        # Inicialitzar chat
+        threading.Thread(target=self.start_consuming).start()
+        
+        # Temps de l'últim missatge
+        self.last = "00:00"
         
         # Funció per enviar un missatge
         def send_message(ctx=None):
@@ -36,12 +70,19 @@ class GroupChat():
                 entry_msg.delete(0, tk.END)
                 # Mostrar missatge
                 self.display_message(message, time, "right")
+                # Codificar missatge en json
+                message = {
+                    "username": self.client.username,
+                    "message": message,
+                    "timestamp": time
+                }
+                message = json.dumps(message)
                 # Enviar missatge
-                
+                self.channel.basic_publish(exchange=self.group_name, routing_key="", body=message, properties=pika.BasicProperties(delivery_mode=self.persistent))
         
         # Configurar finestra de chat grupal
         self.chat = tk.Toplevel(self.root)
-        self.chat.title(f"[{self.client.username}] {self.group_name}")
+        self.chat.title(f"[{self.client.username}] 👥 {self.group_name}")
         self.chat.geometry("400x500")
         # Frame per als inputs (missatges a enviar)
         self.input_frame = tk.Frame(self.chat)
@@ -66,3 +107,28 @@ class GroupChat():
         
         # Llançar finestra
         self.chat.mainloop()
+        
+    # Mètode per imprimir un missatge al chat
+    def display_message(self, message, time, alignment):
+        self.chat_display.config(state="normal")
+        # Imprimir temps
+        if time != self.last:
+            self.chat_display.insert(tk.END, f"{time}\n", f"time")
+            self.last = time
+        self.chat_display.tag_configure("time", font=("Helvetica", 8), justify="center")
+        # Imprimir missatge
+        self.chat_display.insert(tk.END, f"{message}\n", alignment)
+        self.chat_display.tag_configure(alignment, justify=alignment)
+        self.chat_display.config(state="disabled")
+        self.chat_display.yview(tk.END)
+    
+    # Mètode per rebre i processar els missatges
+    def receive_message(self, ch, method, properties, body):
+        body = json.loads(body)
+        username = body.get("username")
+        # Evitar duplicar la impressió al client que envia
+        if username != self.client.username:
+            text = body.get("message")
+            time = body.get("timestamp")
+            message = f"[{username}] {text}"
+            self.display_message(message, time, "left")
