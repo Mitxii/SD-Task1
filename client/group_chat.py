@@ -27,6 +27,7 @@ class GroupChat():
         channel = connection.channel()
         return connection, channel
     
+    # Mètode per configurar la cua del client
     def configure_queue(self):
         connection, channel = self.connect_to_rabbit()
         result = channel.queue_declare(queue="", durable=True)
@@ -53,27 +54,16 @@ class GroupChat():
 
     # Mètode per obtenir i mostrar missatges antics
     def fetch_old_messages(self):
-        # Obrir connexió
-        channel = self.connect_to_rabbit()
-        result = channel.queue_declare(queue=self.group_name, durable=True)
-        queue_name = result.method.queue
-
         # Obtenir els missatges
         messages = []
-        method_frame, header_frame, body = channel.basic_get(queue_name)
+        method_frame, header_frame, body = self.channel.basic_get(self.queue_name)
         while method_frame:
             messages.append(json.loads(body))
-            method_frame, header_frame, body = channel.basic_get(queue_name)
-        
-        # Tancar el canal
-        channel.close()
+            method_frame, header_frame, body = self.channel.basic_get(self.queue_name)
 
         # Mostrar missatges
         for message in messages:
-            if message["username"] == self.client.username:
-                self.display_message(f"{message['message']} [👤]", message['timestamp'], "right")
-            else:
-                self.display_message(f"[{message['username']}] {message['message']}", message['timestamp'], "left")
+            self.display_message(f"[{message['username']}] {message['message']}", message['timestamp'], "left")
 
     # Mètode per consumir la cua i rebre els missatges
     def start_consuming(self):
@@ -148,8 +138,8 @@ class GroupChat():
         self.chat.protocol("WM_DELETE_WINDOW", close_chat)
         
         # Si és un chat persistent, mostrar missatgs antics
-        #if self.persistent == 2:
-        #    self.chat.after(0, self.fetch_old_messages)
+        if self.persistent == 2:
+            self.chat.after(0, self.fetch_old_messages)
             
         # Començar a consumir missatges
         threading.Thread(target=self.start_consuming).start()

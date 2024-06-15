@@ -227,6 +227,7 @@ class Client:
             persistent = self.is_exchange_durable(group_name)
         except Exception:
             self.logger.error("No s'ha trobat el grup, el pots crear subscrivint-te.")
+            return
             
         # Comprovar si el chat és persistent
         if persistent:
