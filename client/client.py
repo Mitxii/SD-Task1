@@ -150,7 +150,7 @@ if __name__ == "__main__":
                 client.subscribe_group()
             case "D":
                 # Descobrir chats actius
-                break
+                client.discover_chats()
             case "I":
                 # Connectar-se al canal d'insults
                 break

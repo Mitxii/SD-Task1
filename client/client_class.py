@@ -5,6 +5,7 @@ import os
 import colorama
 import pika
 import requests
+import json
 import tkinter as tk
 
 # Importar classes gRPC
@@ -39,6 +40,8 @@ class Client:
         threading.Thread(target=self.hearbeat_server).start()
         # Connectar-se a RabbitMQ
         self.connection, self.channel = self.connect_to_rabbit()
+        # Llançar thread per el descobriment de chats
+        threading.Thread(target=self.configure_discovery).start()
         # Inicialitzar logger
         self.logger = ClientLog()
 
@@ -278,7 +281,8 @@ class Client:
             # Crear grup
             print("Creant grup...")
             arguments = {
-                "persistent": persistent
+                "persistent": persistent,
+                "group_chat": True
             }
             self.channel.exchange_declare(exchange=group_name, exchange_type='fanout', arguments=arguments)
             self.logger.success("S'ha creat el chat grupal.")
@@ -296,5 +300,76 @@ class Client:
     def close_group_chat(self, group_name):
         if group_name in self.group_chats:
             self.group_chats.pop(group_name)
+    
+    # Mètode per configurar la cua de descobriment de chats
+    def configure_discovery(self):
+        connect, channel = self.connect_to_rabbit()
+        
+        # Crear cua per rebre peticions de descobriment
+        result = channel.queue_declare(queue="", exclusive=True)
+        discover_queue_name = result.method.queue
+        channel.queue_bind(exchange="chat_discovery", queue=discover_queue_name)
+        
+        # Funció per respondre a les peticions de descobriment
+        def discovery_request(ch, method,  properties, body):
+            # Evitar que contesti el que ha fet el descobriment
+            if self.username == body.decode():
+                return
+            # Generar resposta
+            response = {
+                "username": self.username,
+                "ip": self.ip,
+                "port": self.port
+            }
+            # Contestar al descobriment
+            ch.basic_publish(exchange="", routing_key=str(properties.reply_to), body=json.dumps(response))
+        
+        # Crear cua per contestar a les peticions de descobriment
+        result = channel.queue_declare("", exclusive=True)
+        self.callback_queue = result.method.queue
+        
+        # Funció per processar la resposta de descobriment
+        def on_response(ch, method, properties, body):
+            response = json.loads(body)
+            print("   👤", end=" ")
+            for index, item in enumerate(response):
+                if index == len(response) - 1:
+                    print(f"{colorama.Back.CYAN} {response[item]} {colorama.Back.RESET}")
+                else:
+                    print(f"{colorama.Back.CYAN} {response[item]} {colorama.Back.RESET}", end=f"{colorama.Fore.CYAN}-{colorama.Fore.RESET}")
+        
+        # Consumir les cues
+        channel.basic_consume(queue=discover_queue_name, on_message_callback=discovery_request, auto_ack=True)
+        channel.basic_consume(queue=self.callback_queue, on_message_callback=on_response, auto_ack=True)
+        channel.start_consuming()
+    
+    # Mètode per descobrir chats
+    def discover_chats(self):
+        # Configurar URL de la API de gestió de RabbitMQ
+        url = f'http://user:password@{self.server_ip}:15672/api/exchanges/%2F'
+        
+        # Descobrir chats privats
+        print()
+        self.channel.basic_publish(exchange="chat_discovery", routing_key="", body=self.username, properties=pika.BasicProperties(reply_to=self.callback_queue))
+        time.sleep(1)
+        
+        # Descobrir chats grupals
+        print()
+        response = requests.get(url)
+        if response.status_code != 200:
+            return False
+            
+        # Processar exchanges per imprimir únicament els chats grupals
+        exchanges = response.json()
+        for exchange in exchanges:
+            arguments = exchange.get("arguments", {})
+            is_group_chat = arguments.get("group_chat", False)
+            if is_group_chat:
+                name = exchange.get("name", None)
+                is_persistent = arguments.get("persistent", False)
+                if is_persistent:
+                    print(f"   👥 {colorama.Back.CYAN} {name} {colorama.Back.RESET} (Persistent)")
+                else:
+                    print(f"   👥 {colorama.Back.CYAN} {name} {colorama.Back.RESET}")
         
         
