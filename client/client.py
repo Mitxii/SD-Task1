@@ -113,8 +113,8 @@ if __name__ == "__main__":
     servicer = serve(client)
 
     # Funció per gestionar les senyals SIGINT i SIGTERM
-    def signal_handler(sig, frame):
-        client.stop_client()
+    def signal_handler(sig, frame, message=None):
+        client.stop_client(message)
 
     # Assignar el gestor de senyals per SIGINT i SIGTERM
     signal.signal(signal.SIGINT, signal_handler)
@@ -126,22 +126,32 @@ if __name__ == "__main__":
     
     # Missatge de benvinguda
     os.system(f"echo 'Bones, \033[33m{username}\\033]0;{username}\\007\033[0m!'")
-    print(f"\n\t{colorama.Back.YELLOW + colorama.Fore.BLACK} [P]rivat | [G]rupal | [D]escobrir | [I]nsults | [S]ortir {colorama.Back.RESET + colorama.Fore.RESET}")
+    print(f"\n    {colorama.Back.YELLOW + colorama.Fore.BLACK} [P]rivat | [G]rupal | [D]escobrir | [I]nsults | [N]etejar | [S]ortir {colorama.Back.RESET + colorama.Fore.RESET}")
 
     # Bucle principal del client
     while True:
         option = input(f"\n{colorama.Fore.YELLOW}Opció:{colorama.Fore.RESET} ").upper()
         match option:
             case "P":
-                client.connect_chat()              
+                # Connectar-se a chat privat
+                client.connect_chat()      
             case "G":
+                # Subscriure's a chat grupal        
                 client.connect_group()
             case "D":
+                # Descobrir chats actius
                 break
             case "I":
+                # Connectar-se al canal d'insults
                 break
+            case "N":
+                # Netejar pantalla i tornar a imprimir les opcions
+                os.system("cls" if os.name == "nt" else "clear")
+                print(f"\n    {colorama.Back.YELLOW + colorama.Fore.BLACK} [P]rivat | [G]rupal | [D]escobrir | [I]nsults | [N]etejar | [S]ortir {colorama.Back.RESET + colorama.Fore.RESET}")
             case "S":
-                print(f"Fins aviat {colorama.Fore.YELLOW + username + colorama.Fore.RESET}!")
+                # Sortir
+                signal_handler(None, None, f"Fins aviat {colorama.Fore.YELLOW + username + colorama.Fore.RESET}!")
                 break
             case default:
+                # Inpupt invàlid
                 print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} Opció invàlida. Tria'n una de vàlida.{colorama.Fore.RESET}")

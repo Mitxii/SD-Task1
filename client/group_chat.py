@@ -15,6 +15,8 @@ class GroupChat():
         self.persistent = 1
         if persistent: self.persistent = 2
         
+        self.stop_event = threading.Event()
+        
         # Obrir chat grupal en un thread
         threading.Thread(target=self.open_chat).start()
         
@@ -28,10 +30,27 @@ class GroupChat():
     
     # Mètode per eliminar el chat grupal
     def destroy_chat(self):
+        # Desactivar inpunts mentre es tanquen els canals
+        self.chat.title("Parant...")
+        for widget in self.input_frame.winfo_children():
+            widget.destroy()
+        
         # Tancar els canals
-        ## TODO
+        try:
+            self.listen_channel.stop_consuming()
+        except Exception:
+            pass
+        try:
+            self.listen_channel.close()
+        except Exception:
+            pass
+        try:
+            self.channel.close()
+        except Exception:
+            pass
         # Tancar finestra
         self.chat.destroy()
+        
         # Eliminar de chats actius del client
         self.client.close_group_chat(self.group_name)
 
@@ -42,8 +61,11 @@ class GroupChat():
         queue_name = result.method.queue
         self.listen_channel.queue_bind(exchange=self.group_name, queue=queue_name)
         self.listen_channel.basic_consume(queue=queue_name, on_message_callback=self.receive_message, auto_ack=True)
-        self.listen_channel.start_consuming()
-
+        try:
+            self.listen_channel.start_consuming()
+        except Exception:
+            pass
+        
     # Mètode per obrir el chat grupal
     def open_chat(self):
         self.root = tk.Tk()
@@ -69,7 +91,7 @@ class GroupChat():
                 # Buidar input
                 entry_msg.delete(0, tk.END)
                 # Mostrar missatge
-                self.display_message(message, time, "right")
+                self.display_message(f"{message} [👤]", time, "right")
                 # Codificar missatge en json
                 message = {
                     "username": self.client.username,

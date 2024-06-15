@@ -189,13 +189,16 @@ class Client:
             # Demanar si vol persistència
             persistent = False
             while True:
-                option = input("Vols que el chat sigui persistent? [Y]es [N]o ").upper()
+                option = input("Vols que el chat sigui persistent? [S]í [N]o [C]ancel·lar\n").upper()
                 match option:
-                    case "Y":
+                    case "S":
                         persistent = True
                         break
                     case "N":
                         break
+                    case "C":
+                        print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} S'ha cancel·lat la creació del grup")
+                        return
                     case default:
                         print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} Opció invàlida. Tria'n una de vàlida.{colorama.Fore.RESET}")
             # Crear grup
