@@ -64,9 +64,9 @@ class PrivateChat():
                 # Buidar input
                 entry_msg.delete(0, tk.END)
                 # Mostrar missatge
-                self.display_message(message, time, "right")
+                self.display_message(f"{message} [👤]", time, "right")
                 # Enviar missatge
-                self.stub.SendMessage(chat_pb2.Message(username=self.client.username, body=message, time=time))
+                self.stub.SendMessage(chat_pb2.Message(username=self.client.username, body=f"[{self.client.username}] message", time=time))
                
         # Configurar finestra de chat privat
         self.chat = tk.Toplevel(self.root)

@@ -30,11 +30,6 @@ class GroupChat():
     
     # Mètode per eliminar el chat grupal
     def destroy_chat(self):
-        # Desactivar inpunts mentre es tanquen els canals
-        self.chat.title("Parant...")
-        for widget in self.input_frame.winfo_children():
-            widget.destroy()
-        
         # Tancar els canals
         try:
             self.listen_channel.stop_consuming()
@@ -124,6 +119,11 @@ class GroupChat():
         
         # Funció per eliminar el chat al tancar-lo
         def close_chat():
+            # Desactivar inpunts mentre es tanquen els canals
+            self.chat.title("Parant...")
+            for widget in self.input_frame.winfo_children():
+                widget.destroy()
+                # Destruir chat
             self.destroy_chat()
         self.chat.protocol("WM_DELETE_WINDOW", close_chat)
         
