@@ -27,7 +27,7 @@ class ClientServicer(chat_pb2_grpc.ClientServiceServicer):
     
     # Mètode per fer una petició de chat privat
     def Connection(self, request, context):
-        accept = self.client.connection(request.username)
+        accept = self.client.connection_request(request.username)
         return chat_pb2.ConnectionResponse(accept=accept)
         
     # Mètode per enviar un missatge
@@ -57,7 +57,7 @@ def register_client(ip, port):
         channel = grpc.insecure_channel(f"{server_ip}:{server_grpc_port}")
         server_stub = chat_pb2_grpc.CentralServerStub(channel)
     except Exception:
-        print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha pogut connectar amb el servidor")
+        print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha pogut connectar amb el servidor.")
         time.sleep(2)
         os._exit(0)
     
@@ -86,7 +86,7 @@ def serve(client):
         servicer.add_insecure_port(f'{client.ip}:{client.port}')
         servicer.start()
     except Exception:
-        print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} S'ha produit un error configurant el Servicer")
+        print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} S'ha produit un error configurant el Servicer.")
         time.sleep(1)
         os._exit(0)
     
@@ -126,8 +126,8 @@ if __name__ == "__main__":
     
     # Mètode per imprimir les opcions de l'aplicació
     def print_options():
-        print("\n    ", end="")
-        options = ["[P]rivat", "[G]rupal", "[D]escobrir", "[I]nsults", "[N]etejar", "[S]ortir"]
+        print("\n      ", end="")
+        options = ["[C]onnectar", "[S]ubscriure", "[D]escobrir", "[I]nsultar", "[S]ortir"]
         for index, option in enumerate(options):
             aux = "-"
             if index == len(options) - 1:
@@ -143,26 +143,26 @@ if __name__ == "__main__":
     while True:
         option = input(f"\n{colorama.Fore.YELLOW}Opció:{colorama.Fore.RESET} ").upper()
         match option:
-            case "P":
-                # Connectar-se a chat privat
-                client.connect_chat()      
-            case "G":
+            case "C":
+                # Connectar-se a un chat (privat o grupal)
+                client.connect_chat()  
+            case "S":
                 # Subscriure's a chat grupal        
-                client.connect_group()
+                client.subscribe_group()
             case "D":
                 # Descobrir chats actius
                 break
             case "I":
                 # Connectar-se al canal d'insults
                 break
-            case "N":
-                # Netejar pantalla i tornar a imprimir les opcions
-                os.system("cls" if os.name == "nt" else "clear")
-                print_options()
             case "S":
                 # Sortir
                 signal_handler(None, None, f"Fins aviat {colorama.Fore.YELLOW + username + colorama.Fore.RESET}!")
                 break
+            case "CLEAR":
+                # Netejar terminal i tornar a mostrar les opcions
+                os.system("cls" if os.name == "nt" else "clear")
+                print_options()
             case default:
                 # Inpupt invàlid
-                print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} Opció invàlida. Tria'n una de vàlida.{colorama.Fore.RESET}")
+                print(f"{colorama.Fore.RED} ✖ {colorama.Fore.RESET}Opció invàlida. Tria'n una de vàlida.")

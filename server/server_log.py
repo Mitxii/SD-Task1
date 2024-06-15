@@ -25,14 +25,14 @@ class ServerLog:
     # Mètode per imprimir un missatge de log
     def log(self, log):
         timestamp = self.get_timestamp()
-        print(f"{timestamp} {self.back_color} {self.source} {self.reset} {log}")
+        print(f"{timestamp} {self.back_color} {self.source} {self.reset} - {log}")
           
     # Mètode per imprimir un missatge d'error  
     def error(self, error):
         timestamp = self.get_timestamp()
-        print(f"{timestamp} {colorama.Back.RED} ✖ {self.back_color} {self.source} {self.reset} {error}")
+        print(f"{timestamp} {self.back_color} {self.source} {self.reset + colorama.Fore.RED} ✖ {self.reset + error}")
     
     # Mètode per imprimir un missatge d'èxit  
     def success(self, succ):
         timestamp = self.get_timestamp()
-        print(f"{timestamp} {colorama.Back.GREEN} ✔ {self.back_color} {self.source} {self.reset} {succ}")
+        print(f"{timestamp} {self.back_color} {self.source} {self.reset + colorama.Fore.GREEN} ✔ {self.reset + succ}")

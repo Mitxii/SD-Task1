@@ -14,6 +14,7 @@ from proto import chat_pb2_grpc
 # Importar altres classes
 from private_chat import PrivateChat
 from group_chat import GroupChat
+from client_log import ClientLog
 
 class Client:
     
@@ -29,12 +30,17 @@ class Client:
         self.server_rabbit_port = server_rabbit_port
         # Chats privats actius
         self.private_chats = {}
-        # Chats grupals actius
+        # Chats grupals subscrits i actius
+        self.subscribed_chats = {}
         self.group_chats = {}
         # Inicialitzar biblioteca de colors per la terminal
         colorama.init()
         # Llançar thread per enviar senyals al client
         threading.Thread(target=self.hearbeat_server).start()
+        # Connectar-se a RabbitMQ
+        self.connection, self.channel = self.connect_to_rabbit()
+        # Inicialitzar logger
+        self.logger = ClientLog()
 
     # Mètode per parar el client
     def stop_client(self, message=None):
@@ -53,9 +59,32 @@ class Client:
                 self.stop_client(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} El servidor s'ha desconnectat!")
                 break
             time.sleep(1)
+        
+    # Mètode per connectar-se a un chat (privat o grupal)    
+    def connect_chat(self):
+        # Demanar el tipus de chat
+        print("A quin tipus de chat et vols connectar? [P]rivat [G]rupal [C]ancel·lar")
+        while True:
+            option = input().upper()
+            match option:
+                case "P":
+                    # Connectar-se a chat privat
+                    self.connect_private_chat()
+                    break
+                case "G":
+                    # Connectar-se a chat grupal
+                    self.connect_group_chat
+                    break
+                case "C":
+                    # Cancel·lar connexió
+                    self.logger.success("S'ha cancel·lat la connexió.")
+                    return
+                case default:
+                    # Opció invàlida
+                    self.logger.error("Opció invàlida. Tria'n una de vàlida.")
     
     # Mètode per contestar una petició de chat privat
-    def connection(self, other_username):
+    def connection_request(self, other_username):
         self.accept = False
         
         # Comprovar que no tingui ja un chat obert amb l'altre client
@@ -99,15 +128,15 @@ class Client:
         return self.accept
             
     # Mètode per fer una petició de chat privat   
-    def connect_chat(self):
-        other_username = input("Introdueix el nom d'usuari: ")
+    def connect_private_chat(self):
+        other_username = input("Introdueix el nom d'usuari:\n")
         
         # Comprovacions inicials
         if other_username == self.username:
-            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No pots iniciar un chat privat amb tu mateix")
+            self.logger.error("No pots iniciar un chat privat amb tu mateix.")
             return
         elif other_username in self.private_chats:
-            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} Ja tens un chat obert amb aquest usuari")
+            self.logger.error("Ja tens un chat obert amb aquest usuari.")
             return
         
         # Obtenir dades de l'altre client
@@ -116,10 +145,10 @@ class Client:
         other_ip = response.ip
         other_port = response.port
         if other_ip == "" and other_port == 0:
-            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha trobat l'usuari")
+            self.logger.error("No s'ha trobat l'usuari.")
             return
         else:
-            print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} S'ha trobat l'usuari")
+            self.logger.success("S'ha trobat l'usuari.")
 
         # Sol·licitar chat privat
         print("Sol·licitant chat privat...")
@@ -127,9 +156,9 @@ class Client:
         other_stub = chat_pb2_grpc.ClientServiceStub(channel)
         response = other_stub.Connection(chat_pb2.ConnectionRequest(username=self.username))
         if not response.accept:
-            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} L'altre usuari ha denegat la petició o encara té el chat anterior obert")
+            self.logger.error("L'altre usuari ha denegat la petició o encara té el chat anterior obert.")
         else:
-            print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} L'altre usuari ha acceptat la petició")
+            self.logger.success("L'altre usuari ha acceptat la petició.")
             # Crear i guardar chat privat
             print("Obrint chat...")
             chat = PrivateChat(self, other_username, other_ip, other_port)
@@ -151,10 +180,16 @@ class Client:
     def connect_to_rabbit(self):
         credentials = pika.PlainCredentials("user", "password")
         parameters = pika.ConnectionParameters(self.server_ip, self.server_rabbit_port, '/', credentials)
-        connection = pika.BlockingConnection(parameters)
+        while True:
+            try:
+                connection = pika.BlockingConnection(parameters)
+                break
+            except Exception:
+                pass
         channel = connection.channel()
         return connection, channel
     
+    # Mètode per saber si un chat grupal és persistent
     def is_exchange_durable(self, exchange_name):
         # Configurar URL de la API de gestió de RabbitMQ
         url = f'http://user:password@{self.server_ip}:15672/api/exchanges/%2F/{exchange_name}'
@@ -167,25 +202,29 @@ class Client:
         else:
             return False
     
-    # Mètode per subscriure a un chat grupal
-    def connect_group(self):
-        connection, channel = self.connect_to_rabbit()
+    # Mètode per connectar-se a un chat grupal
+    def connect_group_chat(self):
+        group_name = input("Introdueix el nom del grup: ")
+    
+    # Mètode per subscriure's a un chat grupal
+    def subscribe_group(self):
         group_name = input("Introdueix el nom del grup: ")
         
         # Comprovacions inicials
-        if group_name in self.group_chats:
-            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} Ja tens aquest chat grupal obert")
+        if group_name in self.subscribed_chats:
+            self.logger.error("Ja estàs subscrit a aquest chat.")
             return
         
         # Comprovar si ja existeix un grup amb el nom especificat
         try: 
-            channel.exchange_declare(exchange=group_name, exchange_type="fanout", passive=True)
-            print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} S'ha trobat el grup")
+            self.channel.exchange_declare(exchange=group_name, exchange_type="fanout", passive=True)
+            self.logger.success("S'ha trobat el grup.")
             persistent = self.is_exchange_durable(group_name)
         except Exception:
-            print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha trobat el grup. Configurant...")
+            self.logger.error("No s'ha trobat el grup. Configurant...")
             # Reconnectar a RabbitMQ
-            connection, channel = self.connect_to_rabbit()
+            self.connection.close()
+            self.connection, self.channel = self.connect_to_rabbit()
             # Demanar si vol persistència
             persistent = False
             while True:
@@ -197,18 +236,23 @@ class Client:
                     case "N":
                         break
                     case "C":
-                        print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} S'ha cancel·lat la creació del grup")
+                        self.logger.success("S'ha cancel·lat la creació del grup.")
                         return
                     case default:
-                        print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} Opció invàlida. Tria'n una de vàlida.{colorama.Fore.RESET}")
+                        self.logger.error("Opció invàlida. Tria'n una de vàlida.")
             # Crear grup
             print("Creant grup...")
-            channel.exchange_declare(exchange=group_name, exchange_type='fanout', durable=persistent)
-            print(f"{colorama.Back.GREEN} ✔ {colorama.Back.RESET} S'ha creat el chat grupal")
+            self.channel.exchange_declare(exchange=group_name, exchange_type='fanout', durable=persistent)
+            self.logger.success("S'ha creat el chat grupal.")
         
-        print("Obrint chat...")
+        print("Subscribint...")
+        persistent = self.is_exchange_durable(group_name)
         chat = GroupChat(self, group_name, persistent)
-        self.group_chats[group_name] = chat
+        if persistent:
+            self.subscribed_chats[group_name] = chat
+            self.logger.success("T'has subscrit al chat grupal.")
+        else:
+            self.logger.error("No et pots subscriure a un chat no persistent.")
         
     # Mètode per eliminar un chat grupal    
     def close_group_chat(self, group_name):

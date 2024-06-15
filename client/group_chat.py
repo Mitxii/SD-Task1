@@ -15,16 +15,27 @@ class GroupChat():
         self.persistent = 1
         if persistent: self.persistent = 2
         
-        # Obrir chat grupal en un thread
-        threading.Thread(target=self.open_chat).start()
+        # Configurar cua del client
+        self.queue_name = ""
+        self.configure_queue()
         
+        # Obrir chat grupal en un thread
+        #threading.Thread(target=self.open_chat).start()
+    
     # Mètode per connectar-se a RabbitMQ
     def connect_to_rabbit(self):
         credentials = pika.PlainCredentials("user", "password")
         parameters = pika.ConnectionParameters(self.client.server_ip, self.client.server_rabbit_port, '/', credentials)
         connection = pika.BlockingConnection(parameters)
         channel = connection.channel()
-        return channel
+        return connection, channel
+    
+    def configure_queue(self):
+        connection, channel = self.connect_to_rabbit()
+        result = channel.queue_declare(queue="", durable=True)
+        self.queue_name = result.method.queue
+        channel.queue_bind(exchange=self.group_name, queue=self.queue_name)
+        connection.close()
     
     # Mètode per eliminar el chat grupal
     def destroy_chat(self):
