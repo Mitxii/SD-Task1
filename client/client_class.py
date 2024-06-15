@@ -73,7 +73,7 @@ class Client:
                     break
                 case "G":
                     # Connectar-se a chat grupal
-                    self.connect_group_chat
+                    self.connect_group_chat()
                     break
                 case "C":
                     # Cancel·lar connexió
@@ -164,7 +164,7 @@ class Client:
             chat = PrivateChat(self, other_username, other_ip, other_port)
             self.private_chats[other_username] = chat
     
-    # Mètode per eliminar un chat privat    
+    # Mètode per tancar un chat privat    
     def close_chat(self, other_username):
         if other_username in self.private_chats:
             self.private_chats.pop(other_username)
@@ -205,6 +205,38 @@ class Client:
     # Mètode per connectar-se a un chat grupal
     def connect_group_chat(self):
         group_name = input("Introdueix el nom del grup: ")
+        
+        # Comprovacions inicials
+        if group_name in self.group_chats:
+            self.logger.error("Ja tens el chat d'aquest grup obert.")
+            return
+        
+        # Comprovar si el client està subscrit al chat grupal
+        if group_name in self.subscribed_chats:
+            self.logger.success("Estàs subscrit al chat. (rebràs missatges antics)")
+            print("Obrint chat...")
+            chat = self.subscribed_chats[group_name]
+            self.group_chats[group_name] = chat
+            threading.Thread(target=chat.open_chat).start()
+            return
+        
+        # Comprovar si ja existeix un grup amb el nom especificat
+        try: 
+            self.channel.exchange_declare(exchange=group_name, exchange_type="fanout", passive=True)
+            self.logger.success("S'ha trobat el grup.")
+            persistent = self.is_exchange_durable(group_name)
+        except Exception:
+            self.logger.error("No s'ha trobat el grup, el pots crear subscrivint-te.")
+            
+        # Comprovar si el chat és persistent
+        if persistent:
+            self.logger.error("No estàs subscrit al chat. (no rebràs missatges antics)")
+            
+        # Crear i guardar chat grupal
+        print("Obrint chat...")
+        chat = GroupChat(self, group_name, persistent)
+        self.group_chats[group_name] = chat
+        threading.Thread(target=chat.open_chat).start()
     
     # Mètode per subscriure's a un chat grupal
     def subscribe_group(self):
@@ -247,8 +279,8 @@ class Client:
         
         print("Subscribint...")
         persistent = self.is_exchange_durable(group_name)
-        chat = GroupChat(self, group_name, persistent)
         if persistent:
+            chat = GroupChat(self, group_name, persistent)
             self.subscribed_chats[group_name] = chat
             self.logger.success("T'has subscrit al chat grupal.")
         else:
