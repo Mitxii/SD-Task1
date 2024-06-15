@@ -196,9 +196,8 @@ class Client:
     
     # Mètode per fer pings periòdics al servidor RabbitMQ per mantenir la connexió
     def ping(self):
-        connection, channel = self.connect_to_rabbit()
         while True:
-            channel.basic_publish(exchange="", routing_key="ping_queue", body="ping")
+            self.channel.basic_publish(exchange="", routing_key="ping_queue", body="ping")
             time.sleep(1)
     
     # Mètode per saber si un chat grupal és persistent
@@ -321,9 +320,6 @@ class Client:
         
         # Funció per respondre a les peticions de descobriment
         def discovery_request(ch, method,  properties, body):
-            # Evitar que contesti el que ha fet el descobriment
-            if self.username == body.decode():
-                return
             # Generar resposta
             response = {
                 "username": self.username,
@@ -359,6 +355,7 @@ class Client:
         
         # Descobrir chats privats
         print()
+        self.logger.success("Usuaris actius:")
         self.channel.basic_publish(exchange="chat_discovery", routing_key="", body=self.username, properties=pika.BasicProperties(reply_to=self.callback_queue))
         time.sleep(1)
         
@@ -370,15 +367,22 @@ class Client:
             
         # Processar exchanges per imprimir únicament els chats grupals
         exchanges = response.json()
+        found = 0
         for exchange in exchanges:
             arguments = exchange.get("arguments", {})
             is_group_chat = arguments.get("group_chat", False)
             if is_group_chat:
+                if found == 0:
+                    self.logger.success("Grups actius:")
                 name = exchange.get("name", None)
                 is_persistent = arguments.get("persistent", False)
                 if is_persistent:
                     print(f"   👥 {colorama.Back.CYAN} {name} {colorama.Back.RESET} (Persistent)")
                 else:
                     print(f"   👥 {colorama.Back.CYAN} {name} {colorama.Back.RESET}")
+                found += 1
+        
+        if found == 0:
+            self.logger.error("No hi ha grups actius.")
         
         
