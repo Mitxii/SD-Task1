@@ -199,7 +199,10 @@ class Client:
     # Mètode per fer pings periòdics al servidor RabbitMQ per mantenir la connexió
     def ping(self):
         while True:
-            self.channel.basic_publish(exchange="", routing_key="ping_queue", body="ping")
+            try:
+                self.channel.basic_publish(exchange="", routing_key="ping_queue", body="ping")
+            except Exception:
+                pass
             time.sleep(1)
     
     # Mètode per saber si un chat grupal és persistent
@@ -296,7 +299,8 @@ class Client:
             }
             self.channel.exchange_declare(exchange=group_name, exchange_type='fanout', arguments=arguments)
             self.logger.success("S'ha creat el chat grupal.")
-        
+
+        # Subscriure el client al chat grupal únicament si és un chat persistent
         print("Subscribint...")
         persistent = self.is_exchange_persistent(group_name)
         if persistent:

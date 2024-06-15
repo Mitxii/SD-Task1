@@ -4,7 +4,6 @@ import time
 import signal
 import sys
 import pika
-import threading
 from concurrent import futures
 
 # Importar classes gRPC
@@ -34,6 +33,7 @@ class CentralServer(chat_pb2_grpc.CentralServerServicer):
         response = name_server.register_client(username, ip, port)
         return chat_pb2.RegisterResponse(success=response[0], body=response[1])
 
+    # Mètode per obtenir la informació de connexió d'un client
     def GetClientInfo(self, request, context):
         ip, port = name_server.get_client_info(request.username)
         return chat_pb2.GetInfoResponse(ip=ip, port=port)
@@ -48,7 +48,7 @@ def configure_rabbit(servicer):
     while True:
         try:
             connection = pika.BlockingConnection(parameters)
-            servicer.logger.log("Servidor RabbitMQ escoltant...")
+            servicer.logger.log("Servidor RabbitMQ iniciat. Escoltant al port 5672...")
             break
         except Exception:
             time.sleep(2)
@@ -59,21 +59,22 @@ def configure_rabbit(servicer):
     channel.exchange_declare(exchange="chat_discovery", exchange_type="fanout")
     channel.queue_declare(queue="discovery_queue")
     
-    # Crear cua pels insults
-    channel.queue_declare(queue="insults")
+    # Crear cua pels insults amb timeout de 2 segons
+    arguments = {"x-message-ttl": 2000}
+    channel.queue_declare(queue="insults", arguments=arguments)
     
-    # Funció per processar els missatges
-    def on_discovery_request(ch, method, properties, body):
-        pass
-    
-    # Consumir missatges
-    channel.basic_consume(queue="discovery_queue", on_message_callback=on_discovery_request, auto_ack=True)
-    channel.start_consuming()
+    connection.close()
 
-# Mètode per iniciar el servidor gRPC
+# Mètode per iniciar els servidors
 def serve(port):
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     servicer = CentralServer()
+
+    # Configurar RabbitMQ
+    configure_rabbit(servicer)
+    
+    # Configurar servidor gRPC
+    servicer.logger.log("Iniciant servidor central...")
+    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     chat_pb2_grpc.add_CentralServerServicer_to_server(servicer, server)
     server.add_insecure_port(f'[::]:{port}')
     server.start()
@@ -89,9 +90,6 @@ def serve(port):
     # Assignar el gestor de senyals per SIGINT i SIGTERM
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
-
-    # Configurar RabbitMQ
-    threading.Thread(target=configure_rabbit, args=(servicer,)).start()
 
     # Bucle infinit
     while True:

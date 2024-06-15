@@ -32,6 +32,7 @@ class NameServer:
             self.logger.error(f"No s'ha trobat el client '{username}'")
             return "", 0
         
+        # Obtenir informació
         client_info = self.redis.hget("clients", username)
         client_info = json.loads(client_info.decode("utf-8"))
         ip = client_info["ip"]
@@ -74,8 +75,10 @@ class NameServer:
         client_info = json.dumps({"ip": ip, "port": port})
         self.redis.hset("clients", username, client_info)
         self.logger.success(f"Client registrat {{username: {username}, ip: {ip}, port: {port}}}")
+        
         # Llançar thread per enviar senyals al client
         threading.Thread(target=self.heartbeat, args=(username,)).start()
+        
         return True, ""
     
 name_server = NameServer()

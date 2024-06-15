@@ -56,6 +56,7 @@ class GroupChat():
             self.connection.close()
         except Exception:
             pass
+        
         # Tancar finestra
         self.chat.destroy()
         
