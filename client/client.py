@@ -124,9 +124,20 @@ if __name__ == "__main__":
     time.sleep(0.5)
     os.system("cls" if os.name == "nt" else "clear")
     
+    # Mètode per imprimir les opcions de l'aplicació
+    def print_options():
+        print("\n    ", end="")
+        options = ["[P]rivat", "[G]rupal", "[D]escobrir", "[I]nsults", "[N]etejar", "[S]ortir"]
+        for index, option in enumerate(options):
+            aux = "-"
+            if index == len(options) - 1:
+                aux = " "
+            print(f"{colorama.Back.YELLOW + colorama.Fore.BLACK} {option} {colorama.Back.RESET + colorama.Fore.YELLOW}", end=f"{aux}{colorama.Fore.RESET}")
+        print()            
+    
     # Missatge de benvinguda
     os.system(f"echo 'Bones, \033[33m{username}\\033]0;{username}\\007\033[0m!'")
-    print(f"\n    {colorama.Back.YELLOW + colorama.Fore.BLACK} [P]rivat | [G]rupal | [D]escobrir | [I]nsults | [N]etejar | [S]ortir {colorama.Back.RESET + colorama.Fore.RESET}")
+    print_options()
 
     # Bucle principal del client
     while True:
@@ -147,7 +158,7 @@ if __name__ == "__main__":
             case "N":
                 # Netejar pantalla i tornar a imprimir les opcions
                 os.system("cls" if os.name == "nt" else "clear")
-                print(f"\n    {colorama.Back.YELLOW + colorama.Fore.BLACK} [P]rivat | [G]rupal | [D]escobrir | [I]nsults | [N]etejar | [S]ortir {colorama.Back.RESET + colorama.Fore.RESET}")
+                print_options()
             case "S":
                 # Sortir
                 signal_handler(None, None, f"Fins aviat {colorama.Fore.YELLOW + username + colorama.Fore.RESET}!")

@@ -15,8 +15,6 @@ class GroupChat():
         self.persistent = 1
         if persistent: self.persistent = 2
         
-        self.stop_event = threading.Event()
-        
         # Obrir chat grupal en un thread
         threading.Thread(target=self.open_chat).start()
         
@@ -49,6 +47,30 @@ class GroupChat():
         # Eliminar de chats actius del client
         self.client.close_group_chat(self.group_name)
 
+    # Mètode per obtenir i mostrar missatges antics
+    def fetch_old_messages(self):
+        # Obrir connexió
+        channel = self.connect_to_rabbit()
+        result = channel.queue_declare(queue=self.group_name, durable=True)
+        queue_name = result.method.queue
+
+        # Obtenir els missatges
+        messages = []
+        method_frame, header_frame, body = channel.basic_get(queue_name)
+        while method_frame:
+            messages.append(json.loads(body))
+            method_frame, header_frame, body = channel.basic_get(queue_name)
+        
+        # Tancar el canal
+        channel.close()
+
+        # Mostrar missatges
+        for message in messages:
+            if message["username"] == self.client.username:
+                self.display_message(f"{message['message']} [👤]", message['timestamp'], "right")
+            else:
+                self.display_message(f"[{message['username']}] {message['message']}", message['timestamp'], "left")
+
     # Mètode per consumir la cua i rebre els missatges
     def start_consuming(self):
         self.listen_channel = self.connect_to_rabbit()
@@ -68,9 +90,6 @@ class GroupChat():
         
         # Obrir connexió
         self.channel = self.connect_to_rabbit()
-        
-        # Inicialitzar chat
-        threading.Thread(target=self.start_consuming).start()
         
         # Temps de l'últim missatge
         self.last = "00:00"
@@ -126,6 +145,13 @@ class GroupChat():
                 # Destruir chat
             self.destroy_chat()
         self.chat.protocol("WM_DELETE_WINDOW", close_chat)
+        
+        # Si és un chat persistent, mostrar missatgs antics
+        if self.persistent == 2:
+            self.chat.after(0, self.fetch_old_messages)
+            
+        # Començar a consumir missatges
+        threading.Thread(target=self.start_consuming).start()
         
         # Llançar finestra
         self.chat.mainloop()
