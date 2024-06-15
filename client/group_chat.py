@@ -13,7 +13,9 @@ class GroupChat():
         self.group_name = group_name
         # Modificar la persistència dels missatges en funció de la del exchange
         self.persistent = 1
-        if persistent: self.persistent = 2
+        if persistent: 
+            self.persistent = 2
+        self.auto_ack = persistent == 1
         
         # Configurar cua del client
         self.queue_name = ""
@@ -39,10 +41,18 @@ class GroupChat():
     def destroy_chat(self):
         # Tancar els canals
         try:
+            self.listen_channel.stop_consuming()
+        except Exception:
+            pass
+        try:
             self.listen_connection.close()
         except Exception:
             pass
         try:
+            # Eliminar cua si el client no està subscrit
+            if not self.group_name in self.client.subscribed_chats:
+                self.channel.queue_unbind(queue=self.queue_name, exchange=self.group_name)
+                self.channel.queue_delete
             self.connection.close()
         except Exception:
             pass
@@ -67,10 +77,10 @@ class GroupChat():
 
     # Mètode per consumir la cua i rebre els missatges
     def start_consuming(self):
-        self.listen_connection, channel = self.connect_to_rabbit()
-        channel.basic_consume(queue=self.queue_name, on_message_callback=self.receive_message, auto_ack=True)
+        self.listen_connection, self.listen_channel = self.connect_to_rabbit()
+        self.listen_channel.basic_consume(queue=self.queue_name, on_message_callback=self.receive_message, auto_ack=self.auto_ack)
         try:
-            channel.start_consuming()
+            self.listen_channel.start_consuming()
         except Exception:
             pass
         

@@ -80,7 +80,7 @@ def register_client(ip, port):
 
 # Mètode per iniciar el servicer
 def serve(client):
-    while True:
+    for i in range(100):
         try:
             servicer = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
             chat_pb2_grpc.add_ClientServiceServicer_to_server(ClientServicer(), servicer)
@@ -89,6 +89,7 @@ def serve(client):
             return servicer
         except Exception:
             pass
+    print(f"{colorama.Back.RED} ✖ {colorama.Back.RESET} No s'ha pogut iniciar el Servicer.")
 
 # Main
 if __name__ == "__main__":

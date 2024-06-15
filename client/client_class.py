@@ -190,7 +190,7 @@ class Client:
         return connection, channel
     
     # Mètode per saber si un chat grupal és persistent
-    def is_exchange_durable(self, exchange_name):
+    def is_exchange_persistent(self, exchange_name):
         # Configurar URL de la API de gestió de RabbitMQ
         url = f'http://user:password@{self.server_ip}:15672/api/exchanges/%2F/{exchange_name}'
         
@@ -198,7 +198,9 @@ class Client:
         response = requests.get(url)
         if response.status_code == 200:
             exchange_info = response.json()
-            return exchange_info.get('durable', False)
+            arguments = exchange_info.get("arguments", {})
+            persistent = arguments.get("persistent", False)
+            return persistent
         else:
             return False
     
@@ -224,7 +226,7 @@ class Client:
         try: 
             self.channel.exchange_declare(exchange=group_name, exchange_type="fanout", passive=True)
             self.logger.success("S'ha trobat el grup.")
-            persistent = self.is_exchange_durable(group_name)
+            persistent = self.is_exchange_persistent(group_name)
         except Exception:
             self.logger.error("No s'ha trobat el grup, el pots crear subscrivint-te.")
             return
@@ -252,7 +254,7 @@ class Client:
         try: 
             self.channel.exchange_declare(exchange=group_name, exchange_type="fanout", passive=True)
             self.logger.success("S'ha trobat el grup.")
-            persistent = self.is_exchange_durable(group_name)
+            persistent = self.is_exchange_persistent(group_name)
         except Exception:
             self.logger.error("No s'ha trobat el grup. Configurant...")
             # Reconnectar a RabbitMQ
@@ -275,11 +277,14 @@ class Client:
                         self.logger.error("Opció invàlida. Tria'n una de vàlida.")
             # Crear grup
             print("Creant grup...")
-            self.channel.exchange_declare(exchange=group_name, exchange_type='fanout', durable=persistent)
+            arguments = {
+                "persistent": persistent
+            }
+            self.channel.exchange_declare(exchange=group_name, exchange_type='fanout', arguments=arguments)
             self.logger.success("S'ha creat el chat grupal.")
         
         print("Subscribint...")
-        persistent = self.is_exchange_durable(group_name)
+        persistent = self.is_exchange_persistent(group_name)
         if persistent:
             chat = GroupChat(self, group_name, persistent)
             self.subscribed_chats[group_name] = chat
