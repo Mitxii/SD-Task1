@@ -31,7 +31,7 @@ message GetInfoResponse {
 service ClientService {
     rpc Heartbeat(Empty) returns (Empty) {}
     rpc Connection(ConnectionRequest) returns (ConnectionResponse) {}
-    rpc SendMessage(Message) returns (Empty) {}
+    rpc SendMessage(Message) returns (Response) {}
 }
 
 message ConnectionRequest {
@@ -46,4 +46,8 @@ message Message {
     string username = 1;
     string body = 2;
     string time = 3;
+}
+
+message Response {
+    bool received = 1;
 }

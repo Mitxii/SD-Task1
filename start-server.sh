@@ -76,6 +76,9 @@ if ! command_exists docker-compose; then
     echo "Docker Compose s'ha instal·lat correctament."
 fi
 
+# Crear directori per guardar les dades de RabbitMQ
+mkdir -p rabbitmq_data
+
 # Aturar contenidor RabbitMQ en cas de que estigui encés
 echo "Reiniciant RabbitMQ..."
 docker stop rabbitmq > /dev/null 2>&1

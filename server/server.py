@@ -57,7 +57,6 @@ def configure_rabbit(servicer):
     
     # Crear exchange i cua per al descobriment de chats
     channel.exchange_declare(exchange="chat_discovery", exchange_type="fanout")
-    channel.queue_declare(queue="discovery_queue")
     
     # Crear cua pels insults amb timeout de 2 segons
     arguments = {"x-message-ttl": 2000}

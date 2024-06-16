@@ -4,6 +4,20 @@
 PROTO_ABS_DIR=$(realpath "./proto")
 export PYTHONPATH="$PROTO_ABS_DIR:$PYTHONPATH"
 
+# Funció per comprovar si un paquet està instal·lat
+check_and_install() {
+    PACKAGE=$1
+
+    if ! dpkg -l | grep -qw $PACKAGE; then
+        echo "$PACKAGE no està instal·lat. Instal·lant..."
+        sudo apt update
+        sudo apt install -y $PACKAGE
+    fi
+}
+
+# Comprova e instal·la els paquets necessaris
+check_and_install "net-tools"
+
 # Funció per comprovar si un port està lliure
 port_is_free() {
     netstat -tuln | grep ":$1 " > /dev/null

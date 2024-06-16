@@ -6,6 +6,8 @@ import colorama
 import pika
 import requests
 import json
+import signal
+import sys
 import tkinter as tk
 
 # Importar classes gRPC
@@ -17,6 +19,10 @@ from client_log import ClientLog
 from private_chat import PrivateChat
 from group_chat import GroupChat
 from insult_chat import InsultChat
+
+# Excepció per cancel·lar la sol·licitud d'un chat privat
+class ChatCancelledException(Exception):
+    pass
 
 class Client:
     
@@ -157,20 +163,31 @@ class Client:
         else:
             self.logger.success("S'ha trobat l'usuari.")
 
-        # Sol·licitar chat privat
-        print("Sol·licitant chat privat...")
-        channel = grpc.insecure_channel(f"{other_ip}:{other_port}")
-        other_stub = chat_pb2_grpc.ClientServiceStub(channel)
-        response = other_stub.Connection(chat_pb2.ConnectionRequest(username=self.username))
-        if not response.accept:
-            self.logger.error("L'altre usuari ha denegat la petició o encara té el chat anterior obert.")
-        else:
-            self.logger.success("L'altre usuari ha acceptat la petició.")
-            # Crear i guardar chat privat
-            print("Obrint chat...")
-            chat = PrivateChat(self, other_username, other_ip, other_port)
-            self.private_chats[other_username] = chat
-    
+        # Funció per cancel·lar la sol·licitud de chat
+        def signal_handler(sig, frame):
+            raise ChatCancelledException()
+            
+        # Assignar el gestor de senyals per SIGINT i SIGTERM
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        
+        try:
+            # Sol·licitar chat privat
+            print("Sol·licitant chat privat...")
+            channel = grpc.insecure_channel(f"{other_ip}:{other_port}")
+            other_stub = chat_pb2_grpc.ClientServiceStub(channel)
+            response = other_stub.Connection(chat_pb2.ConnectionRequest(username=self.username))
+            if not response.accept:
+                self.logger.error("L'altre usuari ha denegat la petició o encara té el chat anterior obert.")
+            else:
+                self.logger.success("L'altre usuari ha acceptat la petició.")
+                # Crear i guardar chat privat
+                print("Obrint chat...")
+                chat = PrivateChat(self, other_username, other_ip, other_port)
+                self.private_chats[other_username] = chat
+        except ChatCancelledException:
+            self.logger.error("Has cancel·lat la sol·licitud de chat.")
+            
     # Mètode per tancar un chat privat    
     def close_chat(self, other_username):
         if other_username in self.private_chats:
@@ -182,6 +199,9 @@ class Client:
             chat = self.private_chats[other_username]
             # Enviar missatge
             chat.display_message(message, time, "left")
+            return True
+        else:
+            return False
             
     # Mètode per connectar-se a RabbitMQ
     def connect_to_rabbit(self):
@@ -279,7 +299,7 @@ class Client:
             # Demanar si vol persistència
             persistent = False
             while True:
-                option = input("Vols que el chat sigui persistent? [S]í [N]o [C]ancel·lar\n").upper()
+                option = input("Vols que el chat pugui ser persistent? [S]í [N]o [C]ancel·lar\n").upper()
                 match option:
                     case "S":
                         persistent = True

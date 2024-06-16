@@ -35,8 +35,8 @@ class ClientServicer(chat_pb2_grpc.ClientServiceServicer):
         username = request.username
         message = request.body
         time = request.time
-        self.client.send_message_to(username, message, time)
-        return chat_pb2.Empty()
+        received = self.client.send_message_to(username, message, time)
+        return chat_pb2.Response(received=received)
 
 # Mètode per llegir el fitxer de configuració
 def read_config(file):

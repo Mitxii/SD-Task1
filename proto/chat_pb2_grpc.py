@@ -154,7 +154,7 @@ class ClientServiceStub(object):
         self.SendMessage = channel.unary_unary(
                 '/ClientService/SendMessage',
                 request_serializer=proto_dot_chat__pb2.Message.SerializeToString,
-                response_deserializer=proto_dot_chat__pb2.Empty.FromString,
+                response_deserializer=proto_dot_chat__pb2.Response.FromString,
                 )
 
 
@@ -195,7 +195,7 @@ def add_ClientServiceServicer_to_server(servicer, server):
             'SendMessage': grpc.unary_unary_rpc_method_handler(
                     servicer.SendMessage,
                     request_deserializer=proto_dot_chat__pb2.Message.FromString,
-                    response_serializer=proto_dot_chat__pb2.Empty.SerializeToString,
+                    response_serializer=proto_dot_chat__pb2.Response.SerializeToString,
             ),
     }
     generic_handler = grpc.method_handlers_generic_handler(
@@ -254,6 +254,6 @@ class ClientService(object):
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/ClientService/SendMessage',
             proto_dot_chat__pb2.Message.SerializeToString,
-            proto_dot_chat__pb2.Empty.FromString,
+            proto_dot_chat__pb2.Response.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

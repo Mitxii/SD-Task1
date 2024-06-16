@@ -20,8 +20,6 @@ class PrivateChat():
         # Obrir stub
         channel = grpc.insecure_channel(f"{other_ip}:{other_port}")
         self.stub = chat_pb2_grpc.ClientServiceStub(channel)
-        # Cua de missatges
-        self.messages = []
         
         # Obrir chat privat en un thread
         threading.Thread(target=self.open_chat).start()
@@ -63,10 +61,14 @@ class PrivateChat():
             if message != "":
                 # Buidar input
                 entry_msg.delete(0, tk.END)
-                # Mostrar missatge
-                self.display_message(f"{message} [👤]", time, "right")
                 # Enviar missatge
-                self.stub.SendMessage(chat_pb2.Message(username=self.client.username, body=f"[{self.client.username}] {message}", time=time))
+                response = self.stub.SendMessage(chat_pb2.Message(username=self.client.username, body=f"[{self.client.username}] {message}", time=time))
+                if response.received:
+                    # Mostrar missatge
+                    self.display_message(f"{message} [👤]", time, "right")
+                else:
+                    # Notificar desconnexió
+                    self.display_message(f"EXIT", time, "left")
                
         # Configurar finestra de chat privat
         self.chat = tk.Toplevel(self.root)
