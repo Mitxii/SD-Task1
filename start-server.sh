@@ -10,6 +10,22 @@ then
     exit 1
 fi
 
+# Funció per comprovar si un paquet està instal·lat
+check_and_install() {
+    PACKAGE=$1
+
+    if ! dpkg -l | grep -qw $PACKAGE; then
+        echo "$PACKAGE no està instal·lat. Instal·lant..."
+        sudo apt update
+        sudo apt install -y $PACKAGE
+    fi
+}
+
+# Comprova e instal·la els paquets necessaris
+check_and_install "net-tools"
+check_and_install "apparmor"
+check_and_install "python3.11-venv"
+
 # Obtenir port del servidor
 port=50000
 while true
@@ -59,9 +75,6 @@ if ! command_exists docker-compose; then
     sudo chmod +x /usr/local/bin/docker-compose
     echo "Docker Compose s'ha instal·lat correctament."
 fi
-
-# Crear directori per guardar les dades de RabbitMQ
-mkdir -p rabbitmq_data
 
 # Aturar contenidor RabbitMQ en cas de que estigui encés
 echo "Reiniciant RabbitMQ..."
